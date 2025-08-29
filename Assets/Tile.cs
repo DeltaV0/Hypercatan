@@ -1,4 +1,3 @@
-using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -30,13 +29,16 @@ public class Tile : MonoBehaviour
     public bool selectedForCon;
 
     public Transform connection;
+
+    public MapGenerator map;
     //private int sel;
 
     [PunRPC]
     public void RPC_SetUp(float selx, float sely){
-            float samp = Mathf.PerlinNoise((transform.position.x * 0.1f) + selx, (transform.position.y * 0.1f) + sely);
+            
+            float samp = Mathf.PerlinNoise((transform.position.x * 0.4f) + selx, (transform.position.y * 0.4f) + sely);
             gameObject.name = "tile " + tileID;
-            if(samp > 0.5f){
+            if(samp > 0.65f){
                 resource = 1;
             }
             if(resource == 1){
@@ -97,9 +99,12 @@ public class Tile : MonoBehaviour
     void Awake()
     {
 
+        client = GameObject.Find(PhotonNetwork.LocalPlayer.ActorNumber + "").GetComponent<ClientStuff>(); //FIX THIS (Extremely Important!!!!!!!!!)
+        tileID = MapGenerator.map.ID;
         if(PhotonNetwork.IsMasterClient){
             //sel = Random.Range(-1000f, 1000f);
-            PV.RPC("RPC_SetUp", RpcTarget.All, Random.Range(-1000f, 1000f), Random.Range(-1000f, 1000f));
+            map = MapGenerator.map;
+            PV.RPC("RPC_SetUp", RpcTarget.All, map.randx, map.randy);
         }
        // Debug.Log(PhotonNetwork.LocalPlayer.ActorNumber);
        // client = GameObject.Find(PhotonNetwork.LocalPlayer.ActorNumber + "").GetComponent<ClientStuff>();

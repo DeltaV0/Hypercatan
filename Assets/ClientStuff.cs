@@ -10,6 +10,8 @@ using UnityEngine.UI;
 
 public class ClientStuff : MonoBehaviour
 {
+    public static ClientStuff client;
+
     public Button nextTurnButton;
 
     public Transform cam;
@@ -46,15 +48,23 @@ public class ClientStuff : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
+        
         PV.RPC("RPC_SetUp", RpcTarget.All);
         if(!PV.IsMine){
             Destroy(stuffToDestroy);
         } else {
-            map = GameObject.Find("Map").transform;
+            client = this;
+            //Invoke("SetClient", 0.5f);
+
+        }
+    }
+
+    void SetClient(){
+                    map = GameObject.Find("Map").transform;
             foreach(Transform ti in map){
+                Debug.Log(ti.name);
                 ti.GetComponent<Tile>().client = this;
             }
-        }
     }
 
     // Update is called once per frame
