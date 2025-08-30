@@ -35,7 +35,7 @@ public class Tile : MonoBehaviour
 
     [PunRPC]
     public void RPC_SetUp(float selx, float sely){
-            
+            tileID = MapGenerator.map.ID;
             float samp = Mathf.PerlinNoise((transform.position.x * 0.4f) + selx, (transform.position.y * 0.4f) + sely);
             gameObject.name = "tile " + tileID;
             if(samp > 0.65f){
@@ -48,9 +48,9 @@ public class Tile : MonoBehaviour
 
     [PunRPC]
     public void RPC_Clicked(int sel, int buildingsel, bool first){
-        ClientStuff user;
+        //ClientStuff user;
         //if(PV.IsMine){
-            user = client;
+          //  user = client;
        // }
         if(first){
           //  PhotonNetwork.Instantiate(client.stuff[0], transform.position, transform.rotation);
@@ -98,13 +98,19 @@ public class Tile : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
-
-        client = GameObject.Find(PhotonNetwork.LocalPlayer.ActorNumber + "").GetComponent<ClientStuff>(); //FIX THIS (Extremely Important!!!!!!!!!)
-        tileID = MapGenerator.map.ID;
+        //Debug.Log(PhotonNetwork.LocalPlayer.ActorNumber);
+        //Debug.Log(GameObject.Find(PhotonNetwork.LocalPlayer.ActorNumber.ToString()).name);
+        //client = GameObject.Find(PhotonNetwork.LocalPlayer.ActorNumber + "").GetComponent<ClientStuff>(); //FIX THIS (Extremely Important!!!!!!!!!)
+        //client = ClientStuff.client;
+        Vector3 pos = transform.position;
+        transform.position = Vector3.zero;
+        transform.SetParent(GameObject.Find("Map").transform);
+        transform.localPosition = pos;
+        
         if(PhotonNetwork.IsMasterClient){
             //sel = Random.Range(-1000f, 1000f);
             map = MapGenerator.map;
-            PV.RPC("RPC_SetUp", RpcTarget.All, map.randx, map.randy);
+            PV.RPC("RPC_SetUp", RpcTarget.All, map.randCL[0], map.randCL[1]);
         }
        // Debug.Log(PhotonNetwork.LocalPlayer.ActorNumber);
        // client = GameObject.Find(PhotonNetwork.LocalPlayer.ActorNumber + "").GetComponent<ClientStuff>();

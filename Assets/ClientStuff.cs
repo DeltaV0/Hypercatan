@@ -53,14 +53,16 @@ public class ClientStuff : MonoBehaviour
         if(!PV.IsMine){
             Destroy(stuffToDestroy);
         } else {
-            client = this;
-            //Invoke("SetClient", 0.5f);
+            //client = this;
+            Debug.Log("g");
+            Invoke("SetClient", 0.5f);
 
         }
+        
     }
 
     void SetClient(){
-                    map = GameObject.Find("Map").transform;
+            map = GameObject.Find("Map").transform;
             foreach(Transform ti in map){
                 Debug.Log(ti.name);
                 ti.GetComponent<Tile>().client = this;
