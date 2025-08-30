@@ -9,8 +9,8 @@ using System.IO;
 public class MapGenerator : MonoBehaviour
 {
     public PhotonView PV;
-    public float[] randMast;
-    public float[] randCL;
+    public float[] randMast = new float[2];
+    public float[] randCL = new float[2];
 
     public static MapGenerator map;
 
