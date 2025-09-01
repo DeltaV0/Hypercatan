@@ -165,8 +165,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PV: {fileID: 138794610}
-  randMast: []
-  randCL: []
+  randMast:
+  - 0
+  - 0
+  randCL:
+  - 0
+  - 0
   ID: 0
 --- !u!114 &138794610
 MonoBehaviour:

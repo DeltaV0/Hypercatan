@@ -9,12 +9,14 @@ using System.IO;
 public class MapGenerator : MonoBehaviour
 {
     public PhotonView PV;
-    public float[] randMast = new float[2];
-    public float[] randCL = new float[2];
+    public float[] randMast;
+    public float[] randCL;
 
     public static MapGenerator map;
 
     public int ID;
+
+    public List<Tile> tiles;
 
     [PunRPC]
     public void RPC_SetUp(float selx, float sely)
@@ -74,6 +76,34 @@ public class MapGenerator : MonoBehaviour
                 }
             }
             transform.position = Vector3.zero;
+        }
+    }
+
+    public void NextTurn()
+    {
+        foreach (Tile tile in tiles)
+        {
+            //huzzah!
+            if (tile.connection.Count == 0 && tile.connectionFrom.Count != 0)
+            {
+                tile.TransferResources();
+            }
+            
+         }
+     }
+
+    public void ReloadAllResources()
+    {
+        foreach (Tile tile in tiles)
+        {
+            //  tile.alreadychecked.Clear();
+            //  tile.ResourcesSum[0] = 0;
+            //  tile.ResourcesSum[1] = 0;
+            //Fix This??? Issue: ResourcesSum of Core swapping instead of updating ???
+            //NEW IDEA: DO TOMMOROW:
+            //Every Turn, Transfer items between buildings
+            //make connections 1-way again
+            // tile.FindResourceSum(tile);
         }
     }
 

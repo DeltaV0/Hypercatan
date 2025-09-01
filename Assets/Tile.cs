@@ -8,9 +8,15 @@ using System.IO;
 
 public class Tile : MonoBehaviour
 {
+    public int Health;
+    public bool TakesInput;
     public SpriteRenderer spr;
 
     public SpriteRenderer spr2;
+
+    public GameObject MoveCircle;
+
+    public Unit unit;
 
     public Sprite[] sprites;
 
@@ -24,27 +30,94 @@ public class Tile : MonoBehaviour
 
     public ClientStuff client;
 
+    public ClientStuff ownerClient;
+
     public int Building;
 
     public bool selectedForCon;
 
-    public Transform connection;
+    public List<Transform> connection;
+    public List<Transform> connectionFrom;
+
+    public List<LineRenderer> Lines;
+
+    public GameObject PlaceHolderPf;
 
     public MapGenerator map;
+
+    public int[] ResourcesSum;
+
+    public int[] ResourcesProducing;
+
+    public List<Transform> alreadychecked;
+
+    public int[] Inputs;
+
+    public bool Active;
+
+    public Tile me;
     //private int sel;
 
+    
+
     [PunRPC]
-    public void RPC_SetUp(float selx, float sely){
-            tileID = MapGenerator.map.ID;
-            float samp = Mathf.PerlinNoise((transform.position.x * 0.4f) + selx, (transform.position.y * 0.4f) + sely);
-            gameObject.name = "tile " + tileID;
-            if(samp > 0.65f){
-                resource = 1;
-            }
-            if(resource == 1){
+    public void RPC_SetUp(int ID, float selx, float sely)
+    {
+        map = MapGenerator.map;
+        connection.RemoveAt(0);
+        map.tiles.Add(this);
+        me = this;
+        tileID = ID;
+        float samp = Mathf.PerlinNoise((transform.localPosition.x * 0.4f) + selx, (transform.localPosition.y * 0.4f) + sely);
+        float samp2 = Mathf.PerlinNoise((transform.localPosition.x * 0.2f) - selx, (transform.localPosition.y * 0.2f) + sely);
+        gameObject.name = "tile " + tileID;
+        if (samp > 0.65f)
+        {
+            resource = 1;
+        }
+        else if (samp2 > 0.65f)
+        {
+            resource = -1;
+        }
+        if (resource == 1)
+        {
             spr.color = new Color(1f, 0.5f, 0.5f);
         }
+        
+        if(resource == -1){
+            spr.color = new Color(0.5f, 1f, 0.5f);
+        }
     }
+
+    public void SetColor(int sel)
+    {
+        spr2.color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
+     }
+
+    public void FindResourceSum(Tile origin)
+    {
+
+        if (origin.Active)
+        {
+            ResourcesSum[0] += origin.ResourcesProducing[0];
+            ResourcesSum[1] += origin.ResourcesProducing[1];
+            ResourcesSum[0] -= origin.Inputs[0];
+            ResourcesSum[1] -= origin.Inputs[1];
+         }
+        alreadychecked.Add(origin.transform);
+        //if (origin.connection.Count() == 0) {
+        foreach (Transform t in origin.connection)
+        {
+            if (!alreadychecked.Contains(t))
+            {
+                FindResourceSum(t.GetComponent<Tile>());
+            }
+        }
+        return;
+        //}
+    }
+
+
 
     [PunRPC]
     public void RPC_Clicked(int sel, int buildingsel, bool first){
@@ -53,46 +126,184 @@ public class Tile : MonoBehaviour
           //  user = client;
        // }
         if(first){
-          //  PhotonNetwork.Instantiate(client.stuff[0], transform.position, transform.rotation);
-            Building = 1;
-            spr2.sprite = sprites[Building];
-            Owner = sel;
-            if(client != null){
-            client.NextTurn();
+            if (Owner == sel || Owner == 0)
+            {
+                //  PhotonNetwork.Instantiate(client.stuff[0], transform.position, transform.rotation);
+
+                Building = 1;
+                spr2.sprite = sprites[Building];
+                Owner = sel;
+                SetColor(sel);
+                //ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
+                if (client != null)
+                {
+                    if (client.MyTurn)
+                    {
+                        client.Core = this;
+                    }
+                    client.NextTurn();
+                }
             }
             //spr.color = new Color(0f, 0.5f, 0.5f);
-        } else {
-            if(buildingsel != -1){
-            Building = buildingsel;
-            spr2.sprite = sprites[Building];
-            Owner = sel;
-            } else {
-                if(client.sec == false){
-                    selectedForCon = true;
-                    client.sec = true;
-                    client.pos = transform;
-                } else {
-                    if(selectedForCon){
+            }
+            else
+            {
+            if (buildingsel != -1)
+            {
+                if (Owner == sel || Owner == 0)
+                {
+                    if (Building == 0)
+                    {
+                        if (buildingsel > 0)
+                        {
+                            if (buildingsel != 4)
+                            {
+                                Building = buildingsel;
+                                spr2.sprite = sprites[Building];
+                                SetColor(sel);
+                                Owner = sel;
+                            }
+                            else if (resource == -1)
+                            {
+                                Inputs[0] = 1;
+                                Building = buildingsel;
+                                spr2.sprite = sprites[Building];
+                                SetColor(sel);
+                                Owner = sel;
+                                TakesInput = true;
+                                ResourcesProducing[1] = 1;
+                            }
+
+                            if (resource == 1 && Building == 3)
+                            {
+                                ResourcesProducing[0] = 1;
+                            }
+
+                        }
+                       // else 
+                    }
+                    
+                    if (buildingsel == -2 && Building != 1)
+                    {
+
+                        Building = 0;
+                        spr2.sprite = sprites[Building];
+                        for (int i = 0; i < connection.Count; i++)
+                        {
+                            //int index = connection.IndexOf(client.pos);
+                            Destroy(Lines[i].gameObject);
+                            connection[i].gameObject.GetComponent<Tile>().connection.Remove(transform);
+                            connection.RemoveAt(i);
+                            Lines.RemoveAt(i);
+                        }
                         selectedForCon = false;
                         client.sec = false;
                         client.pos = null;
-                    } else {
-                        client.pos.gameObject.GetComponent<Tile>().connection = transform;
-                        connection = client.pos;
-                        LineRenderer lineRenderer = gameObject.AddComponent<LineRenderer>();
-                        lineRenderer.material = RoomManager.rm.linemat;
-                        lineRenderer.startWidth = 0.2f;
-                        lineRenderer.endWidth = 0.2f;
-                        lineRenderer.positionCount = 2;
-                        lineRenderer.SetPosition(0, transform.position);
-                        lineRenderer.SetPosition(1, connection.position);
+                        //ResourcesSum[0] = 0;
+                        //map.ReloadAllResources();
+                        //alreadychecked.Clear();
+                    }
+                }
+                if (buildingsel == -3)
+                {
+                    if (client.selectedUnit != null && client.selectedUnit.moveable.Contains(this))
+                    {
+                        //client.selectedUnit
+                        client.selectedUnit.Move(this);
+                        client.selectedUnit = null;
+                    }
+                    else
+                    {
+                       // client.selectedUnit = null;
+                     }
+                 }
+                }
+            else
+            {
+                if (client.sec == false)
+                {
+                    if (Building != 0)
+                    {
+                        selectedForCon = true;
+                        client.sec = true;
+                        client.pos = transform;
+                    }
+                }
+                else
+                {
+                    if (selectedForCon)
+                    {
                         selectedForCon = false;
                         client.sec = false;
                         client.pos = null;
                     }
+                    else
+                    {
+                        if (/*connection.Contains(client.pos) &&*/ client.pos.gameObject.GetComponent<Tile>().connection.Contains(transform))
+                        {
+                            int index = -1;
+                            if (connection.Contains(client.pos))
+                            {
+                                index = connection.IndexOf(client.pos);
+                            }
+                            int index2 = connectionFrom.IndexOf(client.pos);
+                            if (connection.Contains(client.pos))
+                            {
+                                Destroy(Lines[index].gameObject);
+                                Lines.RemoveAt(index);
+                            }
+                            else
+                            {
+                                Destroy(Lines[index2].gameObject);
+                                Lines.RemoveAt(index2);
+                            }
+                            client.pos.gameObject.GetComponent<Tile>().connection.Remove(transform);
+                            connectionFrom.Remove(client.pos);
+
+                            selectedForCon = false;
+                            client.sec = false;
+                            client.pos = null;
+                            //ResourcesSum[0] = 0;
+                            //ResourcesSum[1] = 0;
+                            //alreadychecked.Clear();
+                            //map.ReloadAllResources();
+                            //alreadychecked.Clear();
+                        }
+                        else
+                        {
+                            if (Building != 0 && (Building == 2 || client.pos.GetComponent<Tile>().Building == 2) && Owner == sel)
+                            {
+                                //omfg >~<
+                                //Add to lists and create line renderer
+                                client.pos.gameObject.GetComponent<Tile>().connection.Add(transform);
+                                connectionFrom.Add(client.pos);
+                                GameObject blank = Instantiate(PlaceHolderPf, client.pos.position, client.pos.rotation);
+                                blank.transform.SetParent(client.pos);
+                                LineRenderer lineRenderer = blank.AddComponent<LineRenderer>();
+                                //lineRenderer.SetParent(transform);
+                                Lines.Add(lineRenderer);
+                                lineRenderer.material = RoomManager.rm.linemat;
+                                lineRenderer.startWidth = 0.0f;
+                                lineRenderer.endWidth = 0.1f;
+                                lineRenderer.sortingOrder = 2;
+                                lineRenderer.startColor = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1); ;
+                                lineRenderer.endColor = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1); ;
+                                lineRenderer.positionCount = 2;
+                                lineRenderer.SetPosition(0, transform.position);
+                                lineRenderer.SetPosition(1, client.pos.position);
+                                selectedForCon = false;
+                                client.sec = false;
+                                client.pos = null;
+                                //ResourcesSum[0] = 0;
+                                //ResourcesSum[1] = 0;
+                                // map.ReloadAllResources();
+                                //alreadychecked.Clear();
+                            }
+                        }
+                    }
                 }
             }
-        }
+            }
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -106,24 +317,134 @@ public class Tile : MonoBehaviour
         transform.position = Vector3.zero;
         transform.SetParent(GameObject.Find("Map").transform);
         transform.localPosition = pos;
+        //tileID = MapGenerator.map.ID;
         
-        if(PhotonNetwork.IsMasterClient){
+        if (PhotonNetwork.IsMasterClient)
+        {
             //sel = Random.Range(-1000f, 1000f);
             map = MapGenerator.map;
-            PV.RPC("RPC_SetUp", RpcTarget.All, map.randCL[0], map.randCL[1]);
+            PV.RPC("RPC_SetUp", RpcTarget.All, MapGenerator.map.ID ,map.randCL[0], map.randCL[1]);
         }
        // Debug.Log(PhotonNetwork.LocalPlayer.ActorNumber);
        // client = GameObject.Find(PhotonNetwork.LocalPlayer.ActorNumber + "").GetComponent<ClientStuff>();
     }
 
+    public void BackProp(Tile origin)
+    {
+        alreadychecked.Add(origin.transform);
+        Transfer2(origin);
+        foreach (Transform tile in origin.connectionFrom)
+        {
+            if (!alreadychecked.Contains(tile))
+            {
+                BackProp(tile.GetComponent<Tile>());
+            }
+        }
+        return;
+     }
+
+    public void Transfer2(Tile orig)
+    { 
+         if (orig.ResourcesSum[0] >= orig.Inputs[0] && orig.ResourcesSum[1] >= orig.Inputs[1])
+        {
+            Active = true;
+            orig.ResourcesSum[0] -= orig.Inputs[0];
+            orig.ResourcesSum[1] -= orig.Inputs[1];
+        }
+        else
+        {
+            Active = false;
+        }
+        if (Active)
+        {
+            orig.ResourcesSum[0] += orig.ResourcesProducing[0];
+            orig.ResourcesSum[1] += orig.ResourcesProducing[1];
+        }
+        Tile t = null;
+        //Tile t2 = null;
+        //iuh
+        //while()
+        foreach (Transform trans in orig.connection)
+        {
+            Tile a = trans.gameObject.GetComponent<Tile>();
+            if (a.TakesInput)
+            {
+                //int test = 0;
+                while (a.Inputs[0] >= 1 && orig.ResourcesSum[0] >= a.Inputs[0])
+                {
+                    a.ResourcesSum[0]++;
+                    orig.ResourcesSum[0]--;
+                    //test++;
+                }
+            }
+            if (a.Building == 1 || a.Building == 2)
+            {
+                t = a;
+                
+            }
+
+
+        }
+        if (t != null)
+        {
+            while (orig.ResourcesSum[0] > 0)
+            {
+                t.ResourcesSum[0]++;
+                orig.ResourcesSum[0]--;
+            }
+                while (orig.ResourcesSum[1] > 0)
+                {
+                    t.ResourcesSum[1]++;
+                    orig.ResourcesSum[1]--;
+                }
+         }
+    }
+
+    [PunRPC]
+    public void RPC_Transfer()
+    {
+        alreadychecked.Clear();
+        Transfer2(this);
+        BackProp(this);
+     }
+    public void TransferResources()
+    {
+        PV.RPC("RPC_Transfer", RpcTarget.All);
+    }
+
     // Update is called once per frame
     void Update()
     {
-        
+       /* if (Building == 4)
+        {
+            if (ResourcesSum[0] >= Inputs[0])
+            {
+                Active = true;
+                ResourcesProducing[1] = 1;
+            }
+            else
+            {
+                Active = false;
+               // ResourcesProducing[1] = 0;
+            }
+        }
+        else
+        {
+            Active = true;
+         }*/
     }
 
     void OnMouseDown() {
         if(client.MyTurn){
+            if (client.selection == 0)
+                        {
+                            Debug.Log("as");
+                        if (Building == 1 && unit == null)
+                        {
+                            PhotonNetwork.Instantiate(Path.Combine("Unit"), transform.position, transform.rotation);
+                            
+                            }
+                         }
             PV.RPC("RPC_Clicked", RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber, client.selection, client.FirstTurn);
         }
     }

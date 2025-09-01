@@ -10,11 +10,22 @@ using UnityEngine.UI;
 
 public class ClientStuff : MonoBehaviour
 {
-    public static ClientStuff client;
+    //public static ClientStuff client;
+
+    public Unit selectedUnit;
+    public Transform trans2;
+    public LineRenderer line;
+
+    public TMP_Text prodText;
+
+    public Tile Core;
+
+    public Color color;
 
     public Button nextTurnButton;
 
     public Transform cam;
+    public Camera cam2;
 
     public PhotonView PV;
 
@@ -26,7 +37,7 @@ public class ClientStuff : MonoBehaviour
 
     public string[] stuff;
 
-    public string[] units;
+    //public string[] units;
 
     public int selection;
 
@@ -48,14 +59,21 @@ public class ClientStuff : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
-        
+        selectedUnit = null;
+        cam2 = cam.GetComponent<Camera>();
+        color = Color.HSVToRGB(Random.Range(0f, 1f), 1, 1);
         PV.RPC("RPC_SetUp", RpcTarget.All);
-        if(!PV.IsMine){
+        if (!PV.IsMine)
+        {
             Destroy(stuffToDestroy);
-        } else {
+        }
+        else
+        {
             //client = this;
             Debug.Log("g");
             Invoke("SetClient", 0.5f);
+            Invoke("SetClient", 1.0f);
+            Invoke("SetClient", 2.5f);
 
         }
         
@@ -74,8 +92,28 @@ public class ClientStuff : MonoBehaviour
     {
         FirstTurn = RoomManager.rm.Turn == PV.Owner.ActorNumber;
         MyTurn = (((RoomManager.rm.Turn - 1) % PhotonNetwork.CurrentRoom.PlayerCount) + 1 == PV.Owner.ActorNumber);
-        if(PV.IsMine){
+        if (PV.IsMine)
+        {
+            if (Core != null)
+            {
+                prodText.text = "Production: \n" + Core.ResourcesSum[0] + "\n" + Core.ResourcesSum[1];
+            }
+            else
+            {
+                prodText.text = "Please place your Core.";
+            }
             nextTurnButton.interactable = MyTurn;
+            trans2.position = new Vector3(cam2.ScreenToWorldPoint (Input.mousePosition).x, cam2.ScreenToWorldPoint (Input.mousePosition).y, 0);
+            if (pos == null)
+            {
+                line.SetPosition(0, trans2.position);
+                line.SetPosition(1, trans2.position);
+            }
+            else
+            {
+                line.SetPosition(1, trans2.position);
+                line.SetPosition(0, pos.position);
+            }
         }
     }
 
@@ -96,8 +134,10 @@ public class ClientStuff : MonoBehaviour
         }
     }
 
-    public void NextTurn(){
+    public void NextTurn()
+    {
         RoomManager.rm.NextTurn();
+        map.GetComponent<MapGenerator>().NextTurn();
     }
 
     public void Select(int sel){

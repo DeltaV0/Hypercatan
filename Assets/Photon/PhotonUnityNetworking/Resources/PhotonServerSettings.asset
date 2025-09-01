@@ -42,6 +42,8 @@ MonoBehaviour:
   - RPC_SetUp
   - RPC_Next
   - RPC_Clicked
+  - RPC_Transfer
+  - RPC_Move
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
