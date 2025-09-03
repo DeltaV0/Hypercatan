@@ -5,12 +5,15 @@ using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
 using System.IO;
+using System.Linq;
 
 public class Tile : MonoBehaviour
 {
     public int Health;
+    public int MaxHealth;
     public bool TakesInput;
-    public SpriteRenderer spr;
+
+    public SpriteRenderer[] spr;
 
     public SpriteRenderer spr2;
 
@@ -56,6 +59,8 @@ public class Tile : MonoBehaviour
     public bool Active;
 
     public Tile me;
+
+    public int terrainType;
     //private int sel;
 
     
@@ -70,6 +75,7 @@ public class Tile : MonoBehaviour
         tileID = ID;
         float samp = Mathf.PerlinNoise((transform.localPosition.x * 0.4f) + selx, (transform.localPosition.y * 0.4f) + sely);
         float samp2 = Mathf.PerlinNoise((transform.localPosition.x * 0.2f) - selx, (transform.localPosition.y * 0.2f) + sely);
+        float samp3 = Mathf.PerlinNoise((transform.localPosition.x * 0.1f) - selx, (transform.localPosition.y * 0.1f) + sely);
         gameObject.name = "tile " + tileID;
         if (samp > 0.65f)
         {
@@ -79,19 +85,28 @@ public class Tile : MonoBehaviour
         {
             resource = -1;
         }
+        if (samp3 > 0.65f)
+        {
+            terrainType = 1;
+            spr[1].color = new Color(0.5f, 0.5f, 0.5f);
+        } else {
+            terrainType = 0;
+            spr[1].color = new Color(1f, 1f, 1f);
+        }
         if (resource == 1)
         {
-            spr.color = new Color(1f, 0.5f, 0.5f);
+            spr[0].color = new Color(1f, 0.5f, 0.5f);
         }
         
         if(resource == -1){
-            spr.color = new Color(0.5f, 1f, 0.5f);
+            spr[0].color = new Color(0.5f, 1f, 0.5f);
         }
     }
 
     public void SetColor(int sel)
     {
         spr2.color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
+        spr[2].color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
      }
 
     public void FindResourceSum(Tile origin)
@@ -125,15 +140,20 @@ public class Tile : MonoBehaviour
         //if(PV.IsMine){
           //  user = client;
        // }
+       ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
         if(first){
             if (Owner == sel || Owner == 0)
             {
                 //  PhotonNetwork.Instantiate(client.stuff[0], transform.position, transform.rotation);
-
+                ResourcesSum[0] = 2;
+                ResourcesSum[1] = 00;
                 Building = 1;
                 spr2.sprite = sprites[Building];
                 Owner = sel;
+                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                 SetColor(sel);
+                MaxHealth = 10;
+                Health = MaxHealth;
                 //ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
                 if (client != null)
                 {
@@ -148,7 +168,7 @@ public class Tile : MonoBehaviour
             }
             else
             {
-            if (buildingsel != -1)
+            if (buildingsel != -1 && buildingsel != 0 && ownerClient.Resources[0] >= ownerClient.requirments[0] && ownerClient.Resources[1] >= ownerClient.requirments[1])
             {
                 if (Owner == sel || Owner == 0)
                 {
@@ -158,20 +178,37 @@ public class Tile : MonoBehaviour
                         {
                             if (buildingsel != 4)
                             {
+                                ownerClient.Resources[0] -= ownerClient.requirments[0];
+                                ownerClient.Resources[1] -= ownerClient.requirments[1];
                                 Building = buildingsel;
                                 spr2.sprite = sprites[Building];
                                 SetColor(sel);
                                 Owner = sel;
+                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                                if(Building == 2){
+                                    MaxHealth = 2;
+                                    Health = MaxHealth;
+                                } else if(Building == 3){
+                                    MaxHealth = 3;
+                                    Health = MaxHealth;
+                                }
                             }
                             else if (resource == -1)
                             {
+                                ownerClient.Resources[0] -= ownerClient.requirments[0];
+                                ownerClient.Resources[1] -= ownerClient.requirments[1];
                                 Inputs[0] = 1;
                                 Building = buildingsel;
                                 spr2.sprite = sprites[Building];
                                 SetColor(sel);
                                 Owner = sel;
+                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 TakesInput = true;
                                 ResourcesProducing[1] = 1;
+                                if(Building == 4){
+                                    MaxHealth = 4;
+                                    Health = MaxHealth;
+                                }
                             }
 
                             if (resource == 1 && Building == 3)
@@ -186,37 +223,40 @@ public class Tile : MonoBehaviour
                     if (buildingsel == -2 && Building != 1)
                     {
 
-                        Building = 0;
-                        spr2.sprite = sprites[Building];
-                        for (int i = 0; i < connection.Count; i++)
-                        {
-                            //int index = connection.IndexOf(client.pos);
-                            Destroy(Lines[i].gameObject);
-                            connection[i].gameObject.GetComponent<Tile>().connection.Remove(transform);
-                            connection.RemoveAt(i);
-                            Lines.RemoveAt(i);
-                        }
-                        selectedForCon = false;
-                        client.sec = false;
-                        client.pos = null;
-                        //ResourcesSum[0] = 0;
-                        //map.ReloadAllResources();
-                        //alreadychecked.Clear();
+                        Deconstruct(sel, buildingsel, true);
                     }
                 }
                 if (buildingsel == -3)
                 {
-                    if (client.selectedUnit != null && client.selectedUnit.moveable.Contains(this))
+                    if(unit != null){
+                        unit.Clicked();
+                    }
+                    if (client.selectedUnit != null && client.selectedUnit.moveable.Contains(this) && client.selectedUnit.movementPoints > 0)
                     {
                         //client.selectedUnit
                         client.selectedUnit.Move(this);
+                        client.selectedUnit.movementPoints--;
                         client.selectedUnit = null;
+                        
                     }
-                    else
+                    else if(client.selectedUnit != null && client.selectedUnit.attackable.Contains(this) && client.selectedUnit.movementPoints > 0)
                     {
-                       // client.selectedUnit = null;
+                        client.selectedUnit.ToggleMoveZone(false);
+                        if(unit == null){
+                       this.Health--;
+                        } else {
+                            unit.Health--;
+                        }
+                       client.selectedUnit.movementPoints--;
+                       client.selectedUnit = null;
                      }
                  }
+                }
+                else if(buildingsel == 0){
+                    client.SelectedTile = this;
+                    if(unit != null){
+                        client.selectedUnit = unit;
+                    }
                 }
             else
             {
@@ -271,7 +311,7 @@ public class Tile : MonoBehaviour
                         }
                         else
                         {
-                            if (Building != 0 && (Building == 2 || client.pos.GetComponent<Tile>().Building == 2) && Owner == sel)
+                            if (Building != 0 && (Building == 2 || client.pos.GetComponent<Tile>().Building == 2) && Owner == sel && Vector3.Distance(client.pos.position, transform.position) < 3.25f)
                             {
                                 //omfg >~<
                                 //Add to lists and create line renderer
@@ -281,13 +321,15 @@ public class Tile : MonoBehaviour
                                 blank.transform.SetParent(client.pos);
                                 LineRenderer lineRenderer = blank.AddComponent<LineRenderer>();
                                 //lineRenderer.SetParent(transform);
-                                Lines.Add(lineRenderer);
+                                client.pos.gameObject.GetComponent<Tile>().Lines.Add(lineRenderer);
+                                lineRenderer.gameObject.name = gameObject.name + " Connection";
                                 lineRenderer.material = RoomManager.rm.linemat;
                                 lineRenderer.startWidth = 0.0f;
                                 lineRenderer.endWidth = 0.1f;
+                                lineRenderer.numCapVertices = 1;
                                 lineRenderer.sortingOrder = 2;
-                                lineRenderer.startColor = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1); ;
-                                lineRenderer.endColor = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1); ;
+                                lineRenderer.startColor = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
+                                lineRenderer.endColor = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
                                 lineRenderer.positionCount = 2;
                                 lineRenderer.SetPosition(0, transform.position);
                                 lineRenderer.SetPosition(1, client.pos.position);
@@ -304,8 +346,71 @@ public class Tile : MonoBehaviour
                 }
             }
             }
+            if(Health <= 0 && Building != 0){
+                
+            Deconstruct(PhotonNetwork.LocalPlayer.ActorNumber, -2, false);
+            
+            }
+            map.UpdateMoves();
     }
 
+    public void Deconstruct(int sel, int buildingsel, bool refund){
+        PV.RPC("RPC_Deconstruct", RpcTarget.All, sel ,buildingsel);      
+    }
+
+    public void Connections(int sel, int buildingsel){
+         PV.RPC("RPC_Connections", RpcTarget.All, sel ,buildingsel);
+    }
+
+    [PunRPC]
+    public void RPC_Connections(int sel, int buildingsel)
+    {
+        
+    }
+    [PunRPC]
+    public void RPC_Deconstruct(int sel, int buildingsel)
+    {
+                        Building = 0;
+                        spr2.sprite = sprites[Building];
+                        
+                        for (int i = 0; i < connection.Count; i++)
+                        {
+                            //int index = connection.IndexOf(client.pos);
+                            //Destroy(Lines[i].gameObject);
+                            //Destroy(Lines[i].gameObject);
+                            //Lines.RemoveAt(i);
+                            //int ind = connection[i].gameObject.GetComponent<Tile>().connectionFrom.IndexOf(transform);
+                            connection[i].gameObject.GetComponent<Tile>().connectionFrom.Remove(transform);
+                            
+                            //Destroy(connection[i].gameObject.GetComponent<Tile>().Lines[ind]);
+                            connection.RemoveAt(i);
+                            //Lines.RemoveAt(i);
+                        }
+                        for (int i = 0; i < connectionFrom.Count; i++)
+                        {
+                            //int index = connection.IndexOf(client.pos);
+                           // Destroy(Lines[i].gameObject);
+                            //connection[i].gameObject.GetComponent<Tile>().connection.Remove(transform);
+                            Destroy(connectionFrom[i].gameObject.GetComponent<Tile>().Lines[i].gameObject);
+                            connectionFrom[i].gameObject.GetComponent<Tile>().Lines.RemoveAt(i);
+                            connectionFrom.RemoveAt(i);
+                            //Lines.RemoveAt(i);
+                        }
+                        for (int i = 0; i < Lines.Count; i++)
+                        {
+                            //int index = connection.IndexOf(client.pos);
+                            Destroy(Lines[i].gameObject);
+                            //connection[i].gameObject.GetComponent<Tile>().connection.Remove(transform);
+                            //connectionFrom.RemoveAt(i);
+                            Lines.RemoveAt(i);
+                        }
+                        selectedForCon = false;
+                        client.sec = false;
+                        client.pos = null;
+                        //ResourcesSum[0] = 0;
+                        //map.ReloadAllResources();
+                        //alreadychecked.Clear();
+    }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
@@ -331,6 +436,7 @@ public class Tile : MonoBehaviour
 
     public void BackProp(Tile origin)
     {
+        if((((RoomManager.rm.Turn - 1) % PhotonNetwork.CurrentRoom.PlayerCount) + 1 == origin.Owner)){
         alreadychecked.Add(origin.transform);
         Transfer2(origin);
         foreach (Transform tile in origin.connectionFrom)
@@ -339,6 +445,7 @@ public class Tile : MonoBehaviour
             {
                 BackProp(tile.GetComponent<Tile>());
             }
+        }
         }
         return;
      }
@@ -415,36 +522,30 @@ public class Tile : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-       /* if (Building == 4)
-        {
-            if (ResourcesSum[0] >= Inputs[0])
-            {
-                Active = true;
-                ResourcesProducing[1] = 1;
-            }
-            else
-            {
-                Active = false;
-               // ResourcesProducing[1] = 0;
-            }
-        }
-        else
-        {
-            Active = true;
-         }*/
+       if(Health > 0){
+        spr2.color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, ((Health / MaxHealth) * 0.75f) + 0.25f);
+       }
+       if(Building == 1){
+        //Resources[0]
+        //Resources[0]
+       }
     }
 
     void OnMouseDown() {
         if(client.MyTurn){
-            if (client.selection == 0)
+            if(ownerClient != null){
+            if (ownerClient.selection == -3 && ownerClient.MyTurn)
                         {
                             Debug.Log("as");
-                        if (Building == 1 && unit == null)
+                        if (Building == 1 && unit == null && ownerClient.Resources[1] >= 3)
                         {
+                            ownerClient.Resources[0] -= 0;
+                            ownerClient.Resources[1] -= 3;
                             PhotonNetwork.Instantiate(Path.Combine("Unit"), transform.position, transform.rotation);
                             
                             }
                          }
+            }
             PV.RPC("RPC_Clicked", RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber, client.selection, client.FirstTurn);
         }
     }

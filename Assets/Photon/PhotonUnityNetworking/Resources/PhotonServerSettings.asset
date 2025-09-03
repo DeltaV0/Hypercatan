@@ -44,6 +44,10 @@ MonoBehaviour:
   - RPC_Clicked
   - RPC_Transfer
   - RPC_Move
+  - RPC_Moves
+  - RPC_Connections
+  - RPC_Deconstruct
+  - RPC_ToggleMoveZone
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

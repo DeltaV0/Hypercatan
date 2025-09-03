@@ -51,6 +51,8 @@ public class ClientStuff : MonoBehaviour
 
     public Transform pos;
 
+    public Tile SelectedTile;
+
     [PunRPC]
     public void RPC_SetUp(){
             gameObject.name = PV.Owner.ActorNumber + "";
@@ -61,7 +63,7 @@ public class ClientStuff : MonoBehaviour
     {
         selectedUnit = null;
         cam2 = cam.GetComponent<Camera>();
-        color = Color.HSVToRGB(Random.Range(0f, 1f), 1, 1);
+        color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * PhotonNetwork.LocalPlayer.ActorNumber, 1, 1);
         PV.RPC("RPC_SetUp", RpcTarget.All);
         if (!PV.IsMine)
         {
@@ -96,6 +98,7 @@ public class ClientStuff : MonoBehaviour
         {
             if (Core != null)
             {
+                Resources = Core.ResourcesSum;
                 prodText.text = "Production: \n" + Core.ResourcesSum[0] + "\n" + Core.ResourcesSum[1];
             }
             else
@@ -142,5 +145,18 @@ public class ClientStuff : MonoBehaviour
 
     public void Select(int sel){
         selection = sel;
+        if(sel == 2){
+            requirments[0] = 1;
+            requirments[1] = 0;
+        } else if(sel == 3){
+            requirments[0] = 1;
+            requirments[1] = 0;
+        } else if(sel == 4){
+            requirments[0] = 3;
+            requirments[1] = 0;
+        } else {
+            requirments[0] = 0;
+            requirments[1] = 0;
+        }
     }
 }

@@ -17,6 +17,7 @@ public class MapGenerator : MonoBehaviour
     public int ID;
 
     public List<Tile> tiles;
+    public List<Unit> units;
 
     [PunRPC]
     public void RPC_SetUp(float selx, float sely)
@@ -88,9 +89,24 @@ public class MapGenerator : MonoBehaviour
             {
                 tile.TransferResources();
             }
+            foreach (Unit unit in units)
+            {
+            unit.UpdateMoves();
+            unit.movementPoints = 3;
+            }
             
          }
+
+         
      }
+
+    public void UpdateMoves(){
+        foreach (Unit unit in units)
+        {
+            unit.UpdateMoves();
+            
+         }
+    }
 
     public void ReloadAllResources()
     {
