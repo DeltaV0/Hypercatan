@@ -17,6 +17,10 @@ public class Inventory : MonoBehaviour
         }
         gobj[a].SetActive(true);
     }
+
+    public void Do(int a){
+        client.SelectedTile.Click(a);
+    }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {

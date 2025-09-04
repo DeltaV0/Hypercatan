@@ -497,6 +497,26 @@ public class Tile : MonoBehaviour
        }
     }
 
+    public void Click(int s){
+        if(client.MyTurn){
+            if(ownerClient != null){
+            if (s == -3 && ownerClient.MyTurn)
+                        {
+                            Debug.Log("as");
+                        if (Building == 1 && unit == null && ownerClient.Resources[2] >= 3)
+                        {
+                            ownerClient.Resources[0] -= 0;
+                            ownerClient.Resources[1] -= 0;
+                            ownerClient.Resources[2] -= 3;
+                            PhotonNetwork.Instantiate(Path.Combine("Unit"), transform.position, transform.rotation);
+                            
+                            }
+                         }
+            }
+            PV.RPC("RPC_Clicked", RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber, s, client.FirstTurn);
+        }
+    }
+
     void OnMouseDown() {
         if(client.MyTurn){
             if(ownerClient != null){
