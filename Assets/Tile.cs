@@ -17,7 +17,9 @@ public class Tile : MonoBehaviour
 
     public SpriteRenderer spr2;
 
-    public GameObject MoveCircle;
+    public GameObject[] MoveCircle;
+
+    public GameObject Mountains;
 
     public Unit unit;
 
@@ -61,6 +63,10 @@ public class Tile : MonoBehaviour
     public Tile me;
 
     public int terrainType;
+
+    public List<Tile> SphereOfInfluence;
+
+    public List<Tile> neighbors;
     //private int sel;
 
     
@@ -69,33 +75,51 @@ public class Tile : MonoBehaviour
     public void RPC_SetUp(int ID, float selx, float sely)
     {
         map = MapGenerator.map;
-        connection.RemoveAt(0);
+        //connection.RemoveAt(0);
         map.tiles.Add(this);
         me = this;
         tileID = ID;
+        Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 1f, LayerMask.GetMask("Tile"));
+        for (int i = 0; i < l.Length; i++)
+        {   
+            Tile t = l[i].gameObject.GetComponent<Tile>();
+            if (t != this)
+            {
+                neighbors.Add(t);
+             }
+         }
         float samp = Mathf.PerlinNoise((transform.localPosition.x * 0.4f) + selx, (transform.localPosition.y * 0.4f) + sely);
         float samp2 = Mathf.PerlinNoise((transform.localPosition.x * 0.2f) - selx, (transform.localPosition.y * 0.2f) + sely);
         float samp3 = Mathf.PerlinNoise((transform.localPosition.x * 0.1f) - selx, (transform.localPosition.y * 0.1f) + sely);
         gameObject.name = "tile " + tileID;
-        if (samp > 0.65f)
+        if (samp + (samp3 * 0.1f) > 0.65f)
         {
             resource = 1;
+        } else if(samp < 0.25f){
+            resource = 2;
         }
         else if (samp2 > 0.65f)
         {
             resource = -1;
         }
+        transform.position = new Vector3(transform.position.x, transform.position.y, samp3 * -10);
         if (samp3 > 0.65f)
         {
             terrainType = 1;
-            spr[1].color = new Color(0.5f, 0.5f, 0.5f);
+            Mountains.SetActive(true);
+            //spr[1].color = new Color(0.5f, 0.5f, 0.5f);
         } else {
             terrainType = 0;
-            spr[1].color = new Color(1f, 1f, 1f);
+            Mountains.SetActive(false);
+            //spr[1].color = new Color(1f, 1f, 1f);
         }
         if (resource == 1)
         {
-            spr[0].color = new Color(1f, 0.5f, 0.5f);
+            spr[0].color = new Color(0.75f, 0.75f, 0.5f);
+        }
+        if (resource == 2)
+        {
+            spr[0].color = new Color(0.25f, 0.25f, 0.25f);
         }
         
         if(resource == -1){
@@ -106,12 +130,12 @@ public class Tile : MonoBehaviour
     public void SetColor(int sel)
     {
         spr2.color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
-        spr[2].color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
+        spr[2].color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.1f);
+        spr2.color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.1f);
      }
 
     public void FindResourceSum(Tile origin)
     {
-
         if (origin.Active)
         {
             ResourcesSum[0] += origin.ResourcesProducing[0];
@@ -151,6 +175,20 @@ public class Tile : MonoBehaviour
                 spr2.sprite = sprites[Building];
                 Owner = sel;
                 ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                ownerClient.OwnedTiles.Add(this);
+                Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 3f, LayerMask.GetMask("Tile"));
+                for (int i = 0; i < l.Length; i++)
+                {   
+                    Tile t = l[i].gameObject.GetComponent<Tile>();
+                    if (t != this && (t.Owner == 0 || t.Owner == sel))
+                    {       
+                        t.Owner = sel;
+                        t.ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                        t.SetColor(sel);
+                        SphereOfInfluence.Add(t);
+                        ownerClient.OwnedTiles.Add(t);
+                    }
+                }
                 SetColor(sel);
                 MaxHealth = 10;
                 Health = MaxHealth;
@@ -170,7 +208,7 @@ public class Tile : MonoBehaviour
             {
             if (buildingsel != -1 && buildingsel != 0 && ownerClient.Resources[0] >= ownerClient.requirments[0] && ownerClient.Resources[1] >= ownerClient.requirments[1])
             {
-                if (Owner == sel || Owner == 0)
+                if (Owner == sel)
                 {
                     if (Building == 0)
                     {
@@ -197,14 +235,15 @@ public class Tile : MonoBehaviour
                             {
                                 ownerClient.Resources[0] -= ownerClient.requirments[0];
                                 ownerClient.Resources[1] -= ownerClient.requirments[1];
-                                Inputs[0] = 1;
+                                ownerClient.Resources[2] -= ownerClient.requirments[2];
+                                //Inputs[0] = 1;
                                 Building = buildingsel;
                                 spr2.sprite = sprites[Building];
                                 SetColor(sel);
                                 Owner = sel;
                                 ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 TakesInput = true;
-                                ResourcesProducing[1] = 1;
+                                //ResourcesProducing[1] = 1;
                                 if(Building == 4){
                                     MaxHealth = 4;
                                     Health = MaxHealth;
@@ -214,6 +253,10 @@ public class Tile : MonoBehaviour
                             if (resource == 1 && Building == 3)
                             {
                                 ResourcesProducing[0] = 1;
+                            }
+                            if (resource == 2 && Building == 3)
+                            {
+                                ResourcesProducing[1] = 1;
                             }
 
                         }
@@ -258,93 +301,16 @@ public class Tile : MonoBehaviour
                         client.selectedUnit = unit;
                     }
                 }
-            else
-            {
-                if (client.sec == false)
-                {
-                    if (Building != 0)
-                    {
-                        selectedForCon = true;
-                        client.sec = true;
-                        client.pos = transform;
-                    }
-                }
-                else
-                {
-                    if (selectedForCon)
-                    {
-                        selectedForCon = false;
-                        client.sec = false;
-                        client.pos = null;
-                    }
-                    else
-                    {
-                        if (/*connection.Contains(client.pos) &&*/ client.pos.gameObject.GetComponent<Tile>().connection.Contains(transform))
-                        {
-                            int index = -1;
-                            if (connection.Contains(client.pos))
-                            {
-                                index = connection.IndexOf(client.pos);
-                            }
-                            int index2 = connectionFrom.IndexOf(client.pos);
-                            if (connection.Contains(client.pos))
-                            {
-                                Destroy(Lines[index].gameObject);
-                                Lines.RemoveAt(index);
-                            }
-                            else
-                            {
-                                Destroy(Lines[index2].gameObject);
-                                Lines.RemoveAt(index2);
-                            }
-                            client.pos.gameObject.GetComponent<Tile>().connection.Remove(transform);
-                            connectionFrom.Remove(client.pos);
-
-                            selectedForCon = false;
-                            client.sec = false;
-                            client.pos = null;
-                            //ResourcesSum[0] = 0;
-                            //ResourcesSum[1] = 0;
-                            //alreadychecked.Clear();
-                            //map.ReloadAllResources();
-                            //alreadychecked.Clear();
-                        }
-                        else
-                        {
-                            if (Building != 0 && (Building == 2 || client.pos.GetComponent<Tile>().Building == 2) && Owner == sel && Vector3.Distance(client.pos.position, transform.position) < 3.25f)
-                            {
-                                //omfg >~<
-                                //Add to lists and create line renderer
-                                client.pos.gameObject.GetComponent<Tile>().connection.Add(transform);
-                                connectionFrom.Add(client.pos);
-                                GameObject blank = Instantiate(PlaceHolderPf, client.pos.position, client.pos.rotation);
-                                blank.transform.SetParent(client.pos);
-                                LineRenderer lineRenderer = blank.AddComponent<LineRenderer>();
-                                //lineRenderer.SetParent(transform);
-                                client.pos.gameObject.GetComponent<Tile>().Lines.Add(lineRenderer);
-                                lineRenderer.gameObject.name = gameObject.name + " Connection";
-                                lineRenderer.material = RoomManager.rm.linemat;
-                                lineRenderer.startWidth = 0.0f;
-                                lineRenderer.endWidth = 0.1f;
-                                lineRenderer.numCapVertices = 1;
-                                lineRenderer.sortingOrder = 2;
-                                lineRenderer.startColor = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
-                                lineRenderer.endColor = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
-                                lineRenderer.positionCount = 2;
-                                lineRenderer.SetPosition(0, transform.position);
-                                lineRenderer.SetPosition(1, client.pos.position);
-                                selectedForCon = false;
-                                client.sec = false;
-                                client.pos = null;
-                                //ResourcesSum[0] = 0;
-                                //ResourcesSum[1] = 0;
-                                // map.ReloadAllResources();
-                                //alreadychecked.Clear();
-                            }
+                if(buildingsel == -4){
+                    if(Building == 4){
+                        if(ownerClient.Resources[0] >= 1 && ownerClient.Resources[1] >= 1){
+                            ownerClient.Resources[0] -= 1;
+                            ownerClient.Resources[1] -= 1;
+                            ownerClient.Resources[2]++;
                         }
                     }
                 }
-            }
+            
             }
             if(Health <= 0 && Building != 0){
                 
@@ -510,9 +476,9 @@ public class Tile : MonoBehaviour
     [PunRPC]
     public void RPC_Transfer()
     {
-        alreadychecked.Clear();
-        Transfer2(this);
-        BackProp(this);
+        //alreadychecked.Clear();
+        //Transfer2(this);
+        //BackProp(this);
      }
     public void TransferResources()
     {
@@ -537,10 +503,11 @@ public class Tile : MonoBehaviour
             if (ownerClient.selection == -3 && ownerClient.MyTurn)
                         {
                             Debug.Log("as");
-                        if (Building == 1 && unit == null && ownerClient.Resources[1] >= 3)
+                        if (Building == 1 && unit == null && ownerClient.Resources[2] >= 3)
                         {
                             ownerClient.Resources[0] -= 0;
-                            ownerClient.Resources[1] -= 3;
+                            ownerClient.Resources[1] -= 0;
+                            ownerClient.Resources[2] -= 3;
                             PhotonNetwork.Instantiate(Path.Combine("Unit"), transform.position, transform.rotation);
                             
                             }

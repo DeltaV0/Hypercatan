@@ -53,6 +53,9 @@ public class ClientStuff : MonoBehaviour
 
     public Tile SelectedTile;
 
+    public List<Tile> OwnedTiles;
+    public List<Unit> OwnedUnit;
+
     [PunRPC]
     public void RPC_SetUp(){
             gameObject.name = PV.Owner.ActorNumber + "";
@@ -99,7 +102,7 @@ public class ClientStuff : MonoBehaviour
             if (Core != null)
             {
                 Resources = Core.ResourcesSum;
-                prodText.text = "Production: \n" + Core.ResourcesSum[0] + "\n" + Core.ResourcesSum[1];
+                prodText.text = "Production: \n" + Core.ResourcesSum[0] + "\n" + Core.ResourcesSum[1] + "\n" + Core.ResourcesSum[2];
             }
             else
             {
@@ -140,7 +143,18 @@ public class ClientStuff : MonoBehaviour
     public void NextTurn()
     {
         RoomManager.rm.NextTurn();
-        map.GetComponent<MapGenerator>().NextTurn();
+        foreach(Tile t in OwnedTiles){
+            Resources[0] += t.ResourcesProducing[0];
+            Resources[1] += t.ResourcesProducing[1];
+            Resources[2] += t.ResourcesProducing[2];
+        }
+        foreach (Unit unit in OwnedUnit)
+        {
+            unit.UpdateMoves();
+            unit.movementPoints = 3;
+            
+         }
+       // map.GetComponent<MapGenerator>().NextTurn();
     }
 
     public void Select(int sel){

@@ -28,6 +28,7 @@ public class Inventory : MonoBehaviour
     {
         if(client.selection == 0){
             g.SetActive(true);
+            if(client.SelectedTile != null){
             text[0].text = "Tile: " + client.SelectedTile.Building;
             text[1].text = "Building: " + client.SelectedTile.Building + "\nHealth: " + client.SelectedTile.Health + "/" + client.SelectedTile.MaxHealth + "\nTerrain: " + client.SelectedTile.terrainType +"\nOwner: " + client.SelectedTile.Owner + "\nTile Resource: " + client.SelectedTile.resource + "\nResources: " + client.SelectedTile.ResourcesSum[0] + ", " + client.SelectedTile.ResourcesSum[1] + "\n" + client.SelectedTile.ResourcesProducing[0] + ", " + client.SelectedTile.ResourcesProducing[1];
             if(client.selectedUnit != null){
@@ -36,6 +37,7 @@ public class Inventory : MonoBehaviour
             } else {
                 text[2].text = "No Selected Unit";
                 text[3].text = "";
+            }
             }
         } else {
             g.SetActive(false);

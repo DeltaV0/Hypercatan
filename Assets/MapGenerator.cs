@@ -82,20 +82,11 @@ public class MapGenerator : MonoBehaviour
 
     public void NextTurn()
     {
-        foreach (Tile tile in tiles)
-        {
-            //huzzah!
-            if (tile.connection.Count == 0 && tile.connectionFrom.Count != 0)
-            {
-                tile.TransferResources();
-            }
-            foreach (Unit unit in units)
+         foreach (Unit unit in units)
             {
             unit.UpdateMoves();
             unit.movementPoints = 3;
             }
-            
-         }
 
          
      }
@@ -108,20 +99,6 @@ public class MapGenerator : MonoBehaviour
          }
     }
 
-    public void ReloadAllResources()
-    {
-        foreach (Tile tile in tiles)
-        {
-            //  tile.alreadychecked.Clear();
-            //  tile.ResourcesSum[0] = 0;
-            //  tile.ResourcesSum[1] = 0;
-            //Fix This??? Issue: ResourcesSum of Core swapping instead of updating ???
-            //NEW IDEA: DO TOMMOROW:
-            //Every Turn, Transfer items between buildings
-            //make connections 1-way again
-            // tile.FindResourceSum(tile);
-        }
-    }
 
     // Update is called once per frame
     void Update()

@@ -38,13 +38,15 @@ public class Unit : MonoBehaviour
         MapGenerator.map.units.Add(this);
         moveable.Clear();
         attackable.Clear();
-        transform.position = new Vector3(transform.position.x, transform.position.y, -1);
+        transform.position = new Vector3(transform.position.x, transform.position.y, transform.position.z);
         Collider2D q = Physics2D.OverlapCircle(new Vector2(transform.position.x, transform.position.y), 0.1f, LayerMask.GetMask("Tile"));
         current = q.gameObject.GetComponent<Tile>();
         Owner = current.ownerClient;
+        Owner.OwnedUnit.Add(this);
         Client = current.client;
         spr.color = current.spr[2].color;
         current.unit = this;
+        transform.position = new Vector3(transform.position.x, transform.position.y, current.transform.position.z - 0.1f);
 
         Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 1f, LayerMask.GetMask("Tile"));
         for (int i = 0; i < l.Length; i++)
@@ -75,7 +77,11 @@ public class Unit : MonoBehaviour
             {
                 foreach (Tile tile in moveable)
                 {
-                    tile.MoveCircle.SetActive(true);
+                    tile.MoveCircle[0].SetActive(true);
+                }
+                foreach (Tile tile in attackable)
+                {
+                    tile.MoveCircle[1].SetActive(true);
                 }
                 Owner.selectedUnit = this;
                 //Owner.selection = -3;
@@ -84,7 +90,11 @@ public class Unit : MonoBehaviour
             {
                 foreach (Tile tile in moveable)
                 {
-                    tile.MoveCircle.SetActive(false);
+                    tile.MoveCircle[0].SetActive(false);
+                }
+                foreach (Tile tile in attackable)
+                {
+                    tile.MoveCircle[1].SetActive(false);
                 }
                 Owner.selectedUnit = null;
                 //Owner.selection = -3;
@@ -105,7 +115,11 @@ public class Unit : MonoBehaviour
     {
         foreach (Tile tile in moveable)
             {
-                tile.MoveCircle.SetActive(tf);
+                tile.MoveCircle[0].SetActive(tf);
+             }
+             foreach (Tile tile in attackable)
+            {
+                tile.MoveCircle[1].SetActive(tf);
              }
     }
 
@@ -150,7 +164,11 @@ public class Unit : MonoBehaviour
     {
         foreach (Tile tile in moveable)
             {
-                tile.MoveCircle.SetActive(false);
+                tile.MoveCircle[0].SetActive(false);
+             }
+             foreach (Tile tile in attackable)
+            {
+                tile.MoveCircle[1].SetActive(false);
              }
              current.unit = null;
         attackable.Clear();
@@ -159,6 +177,7 @@ public class Unit : MonoBehaviour
         Collider2D q = Physics2D.OverlapCircle(new Vector2(transform.position.x, transform.position.y), 0.1f, LayerMask.GetMask("Tile"));
         current = q.gameObject.GetComponent<Tile>();
         current.unit = this;
+        transform.position = new Vector3(transform.position.x, transform.position.y, current.transform.position.z - 0.1f);
 
         Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 1f, LayerMask.GetMask("Tile"));
         for (int i = 0; i < l.Length; i++)
