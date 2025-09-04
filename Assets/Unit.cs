@@ -19,6 +19,8 @@ public class Unit : MonoBehaviour
 
     public ClientStuff Owner;
 
+    public int OwnerNum;
+
     public ClientStuff Client;
 
     public Tile current;
@@ -43,6 +45,7 @@ public class Unit : MonoBehaviour
         current = q.gameObject.GetComponent<Tile>();
         Owner = current.ownerClient;
         Owner.OwnedUnit.Add(this);
+        OwnerNum = current.Owner;
         Client = current.client;
         spr.color = current.spr[2].color;
         current.unit = this;
@@ -62,7 +65,7 @@ public class Unit : MonoBehaviour
         for (int i = 0; i < b.Length; i++)
         {   
             Tile t = b[i].gameObject.GetComponent<Tile>();
-            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t))
+            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t) && !(t.Building != 0 && t.ownerClient == Owner && (t.unit == null || (t.unit != null && t.unit.OwnerNum == OwnerNum))))
             {
                 attackable.Add(t);
              }
@@ -152,7 +155,7 @@ public class Unit : MonoBehaviour
         for (int i = 0; i < b.Length; i++)
         {   
             Tile t = b[i].gameObject.GetComponent<Tile>();
-            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t))
+            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t) && !(t.Building != 0 && t.Owner == OwnerNum && (t.unit == null || (t.unit != null && t.unit.OwnerNum == OwnerNum))))
             {
                 attackable.Add(t);
              }
@@ -193,7 +196,7 @@ public class Unit : MonoBehaviour
         for (int i = 0; i < b.Length; i++)
         {   
             Tile t = b[i].gameObject.GetComponent<Tile>();
-            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t))
+            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t) && !(t.Building != 0 && t.ownerClient == Owner && (t.unit == null || (t.unit != null && t.unit.OwnerNum == OwnerNum))))
             {
                 attackable.Add(t);
              }

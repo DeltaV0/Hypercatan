@@ -336,46 +336,13 @@ public class Tile : MonoBehaviour
     [PunRPC]
     public void RPC_Deconstruct(int sel, int buildingsel)
     {
-                        Building = 0;
-                        spr2.sprite = sprites[Building];
+        Building = 0;
+        spr2.sprite = sprites[Building];
+        ResourcesProducing[1] = 0;
+        ResourcesProducing[0] = 0;
+        ResourcesProducing[2] = 0;
                         
-                        for (int i = 0; i < connection.Count; i++)
-                        {
-                            //int index = connection.IndexOf(client.pos);
-                            //Destroy(Lines[i].gameObject);
-                            //Destroy(Lines[i].gameObject);
-                            //Lines.RemoveAt(i);
-                            //int ind = connection[i].gameObject.GetComponent<Tile>().connectionFrom.IndexOf(transform);
-                            connection[i].gameObject.GetComponent<Tile>().connectionFrom.Remove(transform);
-                            
-                            //Destroy(connection[i].gameObject.GetComponent<Tile>().Lines[ind]);
-                            connection.RemoveAt(i);
-                            //Lines.RemoveAt(i);
-                        }
-                        for (int i = 0; i < connectionFrom.Count; i++)
-                        {
-                            //int index = connection.IndexOf(client.pos);
-                           // Destroy(Lines[i].gameObject);
-                            //connection[i].gameObject.GetComponent<Tile>().connection.Remove(transform);
-                            Destroy(connectionFrom[i].gameObject.GetComponent<Tile>().Lines[i].gameObject);
-                            connectionFrom[i].gameObject.GetComponent<Tile>().Lines.RemoveAt(i);
-                            connectionFrom.RemoveAt(i);
-                            //Lines.RemoveAt(i);
-                        }
-                        for (int i = 0; i < Lines.Count; i++)
-                        {
-                            //int index = connection.IndexOf(client.pos);
-                            Destroy(Lines[i].gameObject);
-                            //connection[i].gameObject.GetComponent<Tile>().connection.Remove(transform);
-                            //connectionFrom.RemoveAt(i);
-                            Lines.RemoveAt(i);
-                        }
-                        selectedForCon = false;
-                        client.sec = false;
-                        client.pos = null;
-                        //ResourcesSum[0] = 0;
-                        //map.ReloadAllResources();
-                        //alreadychecked.Clear();
+                        
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
@@ -500,7 +467,7 @@ public class Tile : MonoBehaviour
     public void Click(int s){
         if(client.MyTurn){
             if(ownerClient != null){
-            if (s == -3 && ownerClient.MyTurn)
+            if (s == -100 && ownerClient.MyTurn)
                         {
                             Debug.Log("as");
                         if (Building == 1 && unit == null && ownerClient.Resources[2] >= 3)
@@ -520,7 +487,7 @@ public class Tile : MonoBehaviour
     void OnMouseDown() {
         if(client.MyTurn){
             if(ownerClient != null){
-            if (ownerClient.selection == -3 && ownerClient.MyTurn)
+            if (ownerClient.selection == -100 && ownerClient.MyTurn)
                         {
                             Debug.Log("as");
                         if (Building == 1 && unit == null && ownerClient.Resources[2] >= 3)

@@ -79,6 +79,11 @@ public class ClientStuff : MonoBehaviour
             Invoke("SetClient", 0.5f);
             Invoke("SetClient", 1.0f);
             Invoke("SetClient", 2.5f);
+            Invoke("SetClient", 3.5f);
+            Invoke("SetClient", 5f);
+            Invoke("SetClient", 7.5f);
+            Invoke("SetClient", 10f);
+            //ffs is this doesnt work then that's your problem
 
         }
         
@@ -151,7 +156,7 @@ public class ClientStuff : MonoBehaviour
         foreach (Unit unit in OwnedUnit)
         {
             unit.UpdateMoves();
-            unit.movementPoints = 3;
+            unit.movementPoints = 2;
             
          }
        // map.GetComponent<MapGenerator>().NextTurn();

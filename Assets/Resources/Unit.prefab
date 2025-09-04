@@ -108,6 +108,7 @@ MonoBehaviour:
   movementPoints: 0
   attackRange: 0
   Owner: {fileID: 0}
+  OwnerNum: 0
   Client: {fileID: 0}
   current: {fileID: 0}
   moveable: []
