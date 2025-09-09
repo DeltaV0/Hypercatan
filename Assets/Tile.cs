@@ -86,13 +86,17 @@ public class Tile : MonoBehaviour
 
     public void PlayParticle(int a)
     {
+        if(ownerClient == client){
         PV.RPC("RPC_Parts", RpcTarget.All, a);
+        }
      }
 
     [PunRPC]
     public void RPC_Parts(int a)
     {
+        //if(PV.IsMine){
         parts[a].Play();
+        //}
      }
 
     public void GetNeighbors()
@@ -195,17 +199,28 @@ public class Tile : MonoBehaviour
 
     public void SetColor(int sel)
     {
+        PV.RPC("RPC_ColourChange", RpcTarget.All, sel);
+     }
+
+     [PunRPC]
+     public void RPC_ColourChange(int sel){
         if (sel != 0)
         {
 
             spr2.color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
             spr[2].color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.1f);
             spr2.color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.1f);
-            parts[0].startColor = spr2.color;
-            parts[1].startColor = spr2.color;
-            parts[2].startColor = spr2.color;
-            parts[3].startColor = spr2.color;
-            parts[4].startColor = spr2.color;
+            Color col = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.75f);
+            var start = parts[0].main.startColor; 
+            start = col;
+            start = parts[1].main.startColor; 
+            start = col;
+            start = parts[2].main.startColor; 
+            start = col;
+            start = parts[3].main.startColor; 
+            start = col;
+            start = parts[4].main.startColor; 
+            start = col;
         }
         else
         {
@@ -224,7 +239,10 @@ public class Tile : MonoBehaviour
         //if(PV.IsMine){
           //  user = client;
        // }
-       ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
+        if(ownerClient == null){
+            ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
+        }
+      // ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
         if(first){
             if ((Owner == sel || Owner == 0) && terrainType != -1)
             {
@@ -235,12 +253,8 @@ public class Tile : MonoBehaviour
                 ResourcesSum[3] = 2;
                 ResourcesSum[4] = 00;
 
-                ownerClient.Resources[0] = 3;
-                ownerClient.Resources[1] = 0;
-                ownerClient.Resources[2] = 00;
-                ownerClient.Resources[3] = 2;
-                ownerClient.Resources[4] = 00;
-                PlayParticle(1);
+                
+                
                 CityVars[0] = 2;
                 Building = 1;
                 spr2.sprite = sprites[Building];
@@ -248,6 +262,11 @@ public class Tile : MonoBehaviour
                 ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                 ownerClient.OwnedTiles.Add(this);
                 ownerClient.cities.Add(this);
+                ownerClient.Resources[0] = 3;
+                ownerClient.Resources[1] = 0;
+                ownerClient.Resources[2] = 00;
+                ownerClient.Resources[3] = 2;
+                ownerClient.Resources[4] = 00;
                 Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 2.9f, LayerMask.GetMask("Tile"));
                 for (int i = 0; i < l.Length; i++)
                 {   
@@ -262,6 +281,9 @@ public class Tile : MonoBehaviour
                     }
                 }
                 SetColor(sel);
+                //if(PV.IsMine){
+                PlayParticle(1);
+                //}
                 MaxHealth = 200;
                 Health = MaxHealth;
                 //ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
@@ -290,7 +312,8 @@ public class Tile : MonoBehaviour
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
                                 if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
-                                    PlayParticle(3);
+                                Owner = sel;
+                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -300,8 +323,8 @@ public class Tile : MonoBehaviour
                                 Building = buildingsel;
                                 spr2.sprite = sprites[3];
                                 SetColor(sel);
-                                Owner = sel;
-                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                                PlayParticle(3);
+                                
                                 if(Building == 3){
                                     MaxHealth = 50;
                                     Health = MaxHealth;
@@ -314,7 +337,8 @@ public class Tile : MonoBehaviour
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
                                 if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
-                                    PlayParticle(3);
+                                Owner = sel;
+                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -325,6 +349,7 @@ public class Tile : MonoBehaviour
                                 Building = buildingsel;
                                 spr2.sprite = sprites[4];
                                 SetColor(sel);
+                                PlayParticle(3);
                                 Owner = sel;
                                 ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 TakesInput = true;
@@ -338,7 +363,8 @@ public class Tile : MonoBehaviour
                             } else if (buildingsel == 5 && resource == -1)
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
-                                PlayParticle(3);
+                                Owner = sel;
+                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -349,8 +375,7 @@ public class Tile : MonoBehaviour
                                 Building = buildingsel;
                                 spr2.sprite = sprites[6];
                                 SetColor(sel);
-                                Owner = sel;
-                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                                PlayParticle(3);
                                 TakesInput = true;
                                 //ResourcesProducing[1] = 1;
                                 if(Building == 5){
@@ -362,7 +387,8 @@ public class Tile : MonoBehaviour
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
                                 if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
-                                    PlayParticle(3);
+                                    Owner = sel;
+                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -373,8 +399,7 @@ public class Tile : MonoBehaviour
                                 Building = buildingsel;
                                 spr2.sprite = sprites[7];
                                 SetColor(sel);
-                                Owner = sel;
-                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                                PlayParticle(3);
                                 TakesInput = true;
                                 //ResourcesProducing[1] = 1;
                                 if(Building == 6){
@@ -387,7 +412,8 @@ public class Tile : MonoBehaviour
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
                             //if(NearestCity.CityVars[1] < (int)(2.5f * NearestCity.CityVars[0])){
-                                PlayParticle(3);
+                                Owner = sel;
+                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -398,8 +424,7 @@ public class Tile : MonoBehaviour
                                 Building = buildingsel;
                                 spr2.sprite = sprites[8];
                                 SetColor(sel);
-                                Owner = sel;
-                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                                PlayParticle(3);
                                 TakesInput = true;
                                 //ResourcesProducing[1] = 1;
                                 if(Building == 7){
@@ -412,7 +437,8 @@ public class Tile : MonoBehaviour
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
                                 if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
-                                    PlayParticle(3);
+                                Owner = sel;
+                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -423,8 +449,8 @@ public class Tile : MonoBehaviour
                                 Building = buildingsel;
                                 spr2.sprite = sprites[9];
                                 SetColor(sel);
-                                Owner = sel;
-                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                                PlayParticle(3);
+                                
                                 //TakesInput = true;
                                 //ResourcesProducing[1] = 1;
                                 if(Building == 8){
@@ -464,13 +490,15 @@ public class Tile : MonoBehaviour
                     }
                     if(buildingsel == 100){
                         if(Building == 0 && ownerClient.Resources[2] >= 2 && ownerClient.Resources[3] >= 4 && terrainType != -1){
-                            PlayParticle(2);
+                        Owner = sel;
+                        ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                         MaxHealth = 150;
                         Health = MaxHealth;
                         CityVars[0] = 1;
                         Building = buildingsel;
                                 spr2.sprite = sprites[5];
                                 SetColor(sel);
+                                PlayParticle(2);
                                 ownerClient.ChangeResource(2, -2);
                                 ownerClient.ChangeResource(3, -4);
                                 ownerClient.cities.Add(this);
@@ -489,13 +517,15 @@ public class Tile : MonoBehaviour
                         }      
                         } 
                     } else if(buildingsel == 200){
-                        PlayParticle(2);
+                        Owner = sel;
+                        ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                         MaxHealth = 150;
                         Health = MaxHealth;
                         CityVars[0] = 1;
                         Building = 100;
                                 spr2.sprite = sprites[5];
                                 SetColor(sel);
+                                PlayParticle(2);
                                // ownerClient.Resources[2] -= 2;
                                // ownerClient.Resources[3] -= 4;
                                 ownerClient.cities.Add(this);
@@ -561,9 +591,11 @@ public class Tile : MonoBehaviour
                             PlayParticle(4);
                             spr2.color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.5f);
                             cooldown = 1;
+                            if(PV.IsMine){
                             ownerClient.ChangeResource(0, -1);
                             ownerClient.ChangeResource(1, -1);
                             ownerClient.ChangeResource(2, 1);
+                            }
                             //NearestCity.CityVars[2]--;
                         }
                     }
@@ -626,7 +658,7 @@ public class Tile : MonoBehaviour
     [PunRPC]
     public void RPC_Deconstruct(int sel, int buildingsel, bool re)
     {
-        if(NearestCity != null){
+        if(NearestCity != null && (Building == 3 || Building == 4 || Building == 6 || Building == 7 || Building == 8)){
         NearestCity.CityVars[1]--;
         }
         Building = 0;

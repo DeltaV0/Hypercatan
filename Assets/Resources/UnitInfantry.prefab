@@ -121,6 +121,7 @@ MonoBehaviour:
   CounterAttackDamage: 10
   MovableTerrainTypes: 0000000001000000
   AttackableTerrainTypes: 0000000001000000
+  colonize: 0
 --- !u!114 &850330841751779320
 MonoBehaviour:
   m_ObjectHideFlags: 0

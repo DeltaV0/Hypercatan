@@ -226,7 +226,7 @@ public class ClientStuff : MonoBehaviour
                 if (t.cooldown > 0) {
                     t.cooldown--;
                 }
-                if (t.Building == 3 || t.Building == 5 || t.Building == 6)
+                if ((t.Building == 3 || t.Building == 5 || t.Building == 6) && PV.IsMine)
                 {
                     t.PlayParticle(0);
                     yield return new WaitForSeconds(0.1f);

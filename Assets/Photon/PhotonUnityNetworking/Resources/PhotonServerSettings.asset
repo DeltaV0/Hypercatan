@@ -54,6 +54,7 @@ MonoBehaviour:
   - RPC_GetNearestCityForClient
   - RPC_ChangeResource
   - RPC_Parts
+  - RPC_ColourChange
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1
