@@ -11,6 +11,7 @@ using UnityEngine.EventSystems;
 
 public class Tile : MonoBehaviour
 {
+    public ParticleSystem[] parts;
     public int Health;
     public int MaxHealth;
     public bool TakesInput;
@@ -83,19 +84,32 @@ public class Tile : MonoBehaviour
     public int[] returnResources;
     //private int sel;
 
-    public void GetNeighbors(){
+    public void PlayParticle(int a)
+    {
+        PV.RPC("RPC_Parts", RpcTarget.All, a);
+     }
+
+    [PunRPC]
+    public void RPC_Parts(int a)
+    {
+        parts[a].Play();
+     }
+
+    public void GetNeighbors()
+    {
         Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 1f, LayerMask.GetMask("Tile"));
         for (int i = 0; i < l.Length; i++)
-        {   
+        {
             Tile t = l[i].gameObject.GetComponent<Tile>();
             if (t != this)
             {
                 neighbors.Add(t);
-                if(t.terrainType == -1){
+                if (t.terrainType == -1)
+                {
                     port = true;
                 }
-             }
-         }
+            }
+        }
     }
 
     [PunRPC]
@@ -181,14 +195,23 @@ public class Tile : MonoBehaviour
 
     public void SetColor(int sel)
     {
-        if(sel != 0){
-        spr2.color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
-        spr[2].color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.1f);
-        spr2.color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.1f);
-        } else {
-           // spr2.color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
-        spr[2].color = new Color(1, 1, 1, 0.1f);
-        spr2.color = new Color(1, 1, 1, 0.1f);
+        if (sel != 0)
+        {
+
+            spr2.color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
+            spr[2].color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.1f);
+            spr2.color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.1f);
+            parts[0].startColor = spr2.color;
+            parts[1].startColor = spr2.color;
+            parts[2].startColor = spr2.color;
+            parts[3].startColor = spr2.color;
+            parts[4].startColor = spr2.color;
+        }
+        else
+        {
+            // spr2.color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * sel, 1, 1);
+            spr[2].color = new Color(1, 1, 1, 0.1f);
+            spr2.color = new Color(1, 1, 1, 0.1f);
         }
      }
 
@@ -217,6 +240,7 @@ public class Tile : MonoBehaviour
                 ownerClient.Resources[2] = 00;
                 ownerClient.Resources[3] = 2;
                 ownerClient.Resources[4] = 00;
+                PlayParticle(1);
                 CityVars[0] = 2;
                 Building = 1;
                 spr2.sprite = sprites[Building];
@@ -266,6 +290,7 @@ public class Tile : MonoBehaviour
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
                                 if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
+                                    PlayParticle(3);
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -289,6 +314,7 @@ public class Tile : MonoBehaviour
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
                                 if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
+                                    PlayParticle(3);
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -312,6 +338,7 @@ public class Tile : MonoBehaviour
                             } else if (buildingsel == 5 && resource == -1)
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
+                                PlayParticle(3);
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -335,6 +362,7 @@ public class Tile : MonoBehaviour
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
                                 if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
+                                    PlayParticle(3);
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -358,7 +386,8 @@ public class Tile : MonoBehaviour
                             } else if (buildingsel == 7)
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
-                                //if(NearestCity.CityVars[1] < (int)(2.5f * NearestCity.CityVars[0])){
+                            //if(NearestCity.CityVars[1] < (int)(2.5f * NearestCity.CityVars[0])){
+                                PlayParticle(3);
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -383,6 +412,7 @@ public class Tile : MonoBehaviour
                             {
                                 PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
                                 if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
+                                    PlayParticle(3);
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
                                 returnResources[1] = ownerClient.requirments[1];
@@ -434,6 +464,7 @@ public class Tile : MonoBehaviour
                     }
                     if(buildingsel == 100){
                         if(Building == 0 && ownerClient.Resources[2] >= 2 && ownerClient.Resources[3] >= 4 && terrainType != -1){
+                            PlayParticle(2);
                         MaxHealth = 150;
                         Health = MaxHealth;
                         CityVars[0] = 1;
@@ -458,6 +489,7 @@ public class Tile : MonoBehaviour
                         }      
                         } 
                     } else if(buildingsel == 200){
+                        PlayParticle(2);
                         MaxHealth = 150;
                         Health = MaxHealth;
                         CityVars[0] = 1;
@@ -526,6 +558,7 @@ public class Tile : MonoBehaviour
                 if(buildingsel == -4){
                     if(Building == 4 && cooldown == 0 && sel == Owner){
                         if(ownerClient.Resources[0] >= 1 && ownerClient.Resources[1] >= 1){
+                            PlayParticle(4);
                             spr2.color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.5f);
                             cooldown = 1;
                             ownerClient.ChangeResource(0, -1);

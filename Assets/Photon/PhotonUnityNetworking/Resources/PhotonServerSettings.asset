@@ -53,6 +53,7 @@ MonoBehaviour:
   - RPC_TurnSwitch
   - RPC_GetNearestCityForClient
   - RPC_ChangeResource
+  - RPC_Parts
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

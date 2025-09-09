@@ -205,27 +205,37 @@ public class ClientStuff : MonoBehaviour
     }
 
     IEnumerator CountResources(){
-        foreach(Tile t in OwnedTiles){
-            if(PV.IsMine){
-            PV.RPC("RPC_ChangeResource", RpcTarget.All, 0, t.ResourcesProducing[0]);
-            PV.RPC("RPC_ChangeResource", RpcTarget.All, 1, t.ResourcesProducing[1]);
-            PV.RPC("RPC_ChangeResource", RpcTarget.All, 2, t.ResourcesProducing[2]);
-            PV.RPC("RPC_ChangeResource", RpcTarget.All, 3, t.ResourcesProducing[3]);
-            PV.RPC("RPC_ChangeResource", RpcTarget.All, 4, t.ResourcesProducing[4]);
+        foreach (Tile t in OwnedTiles) {
+            if (t.Building != 0 && t.Building != 1 && t.Building != 100) {
+                if (PV.IsMine) {
+                    PV.RPC("RPC_ChangeResource", RpcTarget.All, 0, t.ResourcesProducing[0]);
+                    PV.RPC("RPC_ChangeResource", RpcTarget.All, 1, t.ResourcesProducing[1]);
+                    PV.RPC("RPC_ChangeResource", RpcTarget.All, 2, t.ResourcesProducing[2]);
+                    PV.RPC("RPC_ChangeResource", RpcTarget.All, 3, t.ResourcesProducing[3]);
+                    PV.RPC("RPC_ChangeResource", RpcTarget.All, 4, t.ResourcesProducing[4]);
+                }
+                // Resources[0] += t.ResourcesProducing[0];
+                //Resources[1] += t.ResourcesProducing[1];
+                // Resources[2] += t.ResourcesProducing[2];
+                // Resources[3] += t.ResourcesProducing[3];
+                //  Resources[4] += t.ResourcesProducing[4];
+                if (t.Building == 8) {
+                    TechPoints++;
+                }
+                t.spr2.color = new Color(t.spr2.color.r, t.spr2.color.g, t.spr2.color.b, 1f);
+                if (t.cooldown > 0) {
+                    t.cooldown--;
+                }
+                if (t.Building == 3 || t.Building == 5 || t.Building == 6)
+                {
+                    t.PlayParticle(0);
+                    yield return new WaitForSeconds(0.1f);
+                }
             }
-           // Resources[0] += t.ResourcesProducing[0];
-            //Resources[1] += t.ResourcesProducing[1];
-           // Resources[2] += t.ResourcesProducing[2];
-           // Resources[3] += t.ResourcesProducing[3];
-          //  Resources[4] += t.ResourcesProducing[4];
-            if(t.Building == 8){
-                TechPoints++;
-            }
-            t.spr2.color = new Color(t.spr2.color.r, t.spr2.color.g, t.spr2.color.b, 1f);
-            if(t.cooldown > 0){
-                t.cooldown--;
-            }
-            yield return new WaitForSeconds(0.1f);
+                else
+                {
+                    yield return new WaitForSeconds(0f);
+                }
         }
         yield return new WaitForSeconds(0f);
     }
