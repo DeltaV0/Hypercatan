@@ -16,6 +16,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public PhotonView PV;
 
     public Material linemat;
+
+    public AudioSource turnchangesfx;
     // Start is called before the first frame update
     void Awake()
     {
@@ -50,6 +52,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     [PunRPC]
     public void RPC_Next(int sel){
+        turnchangesfx.Play();
             Turn = sel;
     }
 

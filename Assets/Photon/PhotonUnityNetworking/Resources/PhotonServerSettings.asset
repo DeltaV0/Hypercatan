@@ -48,6 +48,11 @@ MonoBehaviour:
   - RPC_Connections
   - RPC_Deconstruct
   - RPC_ToggleMoveZone
+  - RPC_Damage
+  - RPC_DamageUnit
+  - RPC_TurnSwitch
+  - RPC_GetNearestCityForClient
+  - RPC_ChangeResource
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

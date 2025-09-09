@@ -19,6 +19,10 @@ public class MapGenerator : MonoBehaviour
     public List<Tile> tiles;
     public List<Unit> units;
 
+    public int size;
+
+    //public Canvas canvas;
+
     [PunRPC]
     public void RPC_SetUp(float selx, float sely)
     {
@@ -36,35 +40,38 @@ public class MapGenerator : MonoBehaviour
             randMast[1] = Random.Range(-1000f, 1000f);
             PV.RPC("RPC_SetUp", RpcTarget.All, randMast[0], randMast[1]);
             //randy = Random.Range(-1000f, 1000f);
-            PhotonNetwork.Instantiate(Path.Combine("Tile"), transform.position, transform.rotation);
-
-            for (int i = 0; i < 200; i++)
+            //PhotonNetwork.Instantiate(Path.Combine("Tile"), transform.position, transform.rotation);
+            //transform.Translate(1, 0, 0);
+            for (int i = 0; i < size + 1; i++)
             {
-                int rand = Random.Range(0, 6);
-                if (rand == 0)
-                {
+                //int c = 9 + (-1 * Mathf.Abs(i - 4)) % 2;
+                Vector3 p = transform.position;
+                for(int a = 0; a <= size + (-1 * Mathf.Abs(i - (size/2))) + Random.Range(-1, 2); a++){
+                    
+                   // if (c == 0)
+                //{
                     transform.Translate(1, 0, 0);
-                }
-                else if (rand == 1)
+                //}
+                /*else if (c == 1)
                 {
                     transform.Translate(-1, 0, 0);
                 }
-                else if (rand == 2)
+                else if (c == 2)
                 {
                     transform.Translate(0.5f, 0.8660254f, 0);
                 }
-                else if (rand == 3)
+                else if (c == 3)
                 {
                     transform.Translate(0.5f, -0.8660254f, 0);
                 }
-                else if (rand == 4)
+                else if (c == 4)
                 {
                     transform.Translate(-0.5f, 0.8660254f, 0);
                 }
-                else if (rand == 5)
+                else if (c == 5)
                 {
                     transform.Translate(-0.5f, -0.8660254f, 0);
-                }
+                }*/
                 Collider2D q = Physics2D.OverlapCircle(new Vector2(transform.position.x, transform.position.y), 0.1f);
                 if (q == null)
                 {
@@ -73,8 +80,21 @@ public class MapGenerator : MonoBehaviour
                 }
                 else
                 {
-                    i--;
+                    a--;
                 }
+                }
+                transform.position = p;
+                transform.Translate(Random.Range(-1, 2), 0, 0);
+                if (i-(size/2) >= 0)
+                {
+                    transform.Translate(0.5f, -0.8660254f, 0);
+                }
+                else
+                {
+                    transform.Translate(-0.5f, -0.8660254f, 0);
+                }
+                
+                
             }
             transform.position = Vector3.zero;
         }
@@ -85,7 +105,8 @@ public class MapGenerator : MonoBehaviour
          foreach (Unit unit in units)
             {
             unit.UpdateMoves();
-            unit.movementPoints = 3;
+            unit.movementPoints[0] = unit.MaxmovementPoints[0];
+            unit.movementPoints[1] = unit.MaxmovementPoints[1];
             }
 
          

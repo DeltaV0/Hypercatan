@@ -11,10 +11,14 @@ public class Unit : MonoBehaviour
     public SpriteRenderer spr;
     public int Type;
 
-    public int MoveSpeed;
+   // public int MoveSpeed;
 
-    public int movementPoints;
+    public int[] MaxmovementPoints;
+    public int[] movementPoints;
 
+    public bool OmniMove;
+
+    //public int moveRange;
     public int attackRange;
 
     public ClientStuff Owner;
@@ -32,11 +36,21 @@ public class Unit : MonoBehaviour
     public PhotonView PV;
 
     public int Health;
+    public int MaxHealth;
+
+    public int damage;
+
+    public int CounterAttackDamage;
+
+    public int[] MovableTerrainTypes;
+    public int[] AttackableTerrainTypes;
+
+    public bool colonize;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
         
-        Health = 3;
+        
         MapGenerator.map.units.Add(this);
         moveable.Clear();
         attackable.Clear();
@@ -51,21 +65,25 @@ public class Unit : MonoBehaviour
         current.unit = this;
         transform.position = new Vector3(transform.position.x, transform.position.y, current.transform.position.z - 0.1f);
 
+        damage =(int)(damage * (1 + current.ownerClient.techTree.Bonuses[Type,0]));
+        CounterAttackDamage = (int)(CounterAttackDamage * (1 + current.ownerClient.techTree.Bonuses[Type,0]));
+        MaxHealth = (int)(MaxHealth * (current.ownerClient.techTree.Bonuses[Type,1] + 1));
+        Health = MaxHealth;
         Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 1f, LayerMask.GetMask("Tile"));
         for (int i = 0; i < l.Length; i++)
         {   
             Tile t = l[i].gameObject.GetComponent<Tile>();
-            if (t != current && t.Building == 0 && t.unit == null)
+            if (t != current && t.Building == 0 && t.unit == null && MovableTerrainTypes.Contains(t.terrainType))
             {
                 moveable.Add(t);
              }
          }
 
-         Collider2D[] b = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), attackRange, LayerMask.GetMask("Tile"));
+         Collider2D[] b = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 0.95f * attackRange, LayerMask.GetMask("Tile"));
         for (int i = 0; i < b.Length; i++)
         {   
             Tile t = b[i].gameObject.GetComponent<Tile>();
-            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t) && !(t.Building != 0 && t.ownerClient == Owner && (t.unit == null || (t.unit != null && t.unit.OwnerNum == OwnerNum))))
+            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t) && !(t.Building != 0 && t.ownerClient == Owner && (t.unit == null || (t.unit != null && t.unit.OwnerNum == OwnerNum))) && AttackableTerrainTypes.Contains(t.terrainType))
             {
                 attackable.Add(t);
              }
@@ -75,18 +93,24 @@ public class Unit : MonoBehaviour
     public void Clicked() {
         if (Owner.MyTurn)
         {
-            if(Owner.selection == -3 && movementPoints > 0){
+            if(Owner.selection == -3){
             if (Owner.selectedUnit != this)
             {
-                foreach (Tile tile in moveable)
+                if(movementPoints[0] > 0){
+                    foreach (Tile tile in moveable)
                 {
                     tile.MoveCircle[0].SetActive(true);
                 }
-                foreach (Tile tile in attackable)
+                Owner.selectedUnit = this;
+                }
+                if(movementPoints[1] > 0){
+                    foreach (Tile tile in attackable)
                 {
                     tile.MoveCircle[1].SetActive(true);
                 }
                 Owner.selectedUnit = this;
+                }
+                
                 //Owner.selection = -3;
             }
             else
@@ -136,6 +160,15 @@ public class Unit : MonoBehaviour
         PV.RPC("RPC_Moves", RpcTarget.All);
     }
 
+    public void Damage(int a){
+        PV.RPC("RPC_DamageUnit", RpcTarget.All, a);
+    }
+
+    [PunRPC]
+    public void RPC_DamageUnit(int a){
+        Health -= a;
+    }
+
     [PunRPC]
     public void RPC_Moves()
     {
@@ -145,17 +178,17 @@ public class Unit : MonoBehaviour
         for (int i = 0; i < l.Length; i++)
         {   
             Tile t = l[i].gameObject.GetComponent<Tile>();
-            if (t != current && t.Building == 0 && t.unit == null)
+            if (t != current && t.Building == 0 && t.unit == null && MovableTerrainTypes.Contains(t.terrainType))
             {
                 moveable.Add(t);
              }
          }
 
-         Collider2D[] b = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 1f, LayerMask.GetMask("Tile"));
+         Collider2D[] b = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 0.95f * attackRange, LayerMask.GetMask("Tile"));
         for (int i = 0; i < b.Length; i++)
         {   
             Tile t = b[i].gameObject.GetComponent<Tile>();
-            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t) && !(t.Building != 0 && t.Owner == OwnerNum && (t.unit == null || (t.unit != null && t.unit.OwnerNum == OwnerNum))))
+            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t) && !(t.Building != 0 && t.ownerClient == Owner && (t.unit == null || (t.unit != null && t.unit.OwnerNum == OwnerNum))) && AttackableTerrainTypes.Contains(t.terrainType))
             {
                 attackable.Add(t);
              }
@@ -186,17 +219,17 @@ public class Unit : MonoBehaviour
         for (int i = 0; i < l.Length; i++)
         {   
             Tile t = l[i].gameObject.GetComponent<Tile>();
-            if (t != current && t.Building == 0 && t.unit == null)
+            if (t != current && t.Building == 0 && t.unit == null && MovableTerrainTypes.Contains(t.terrainType))
             {
                 moveable.Add(t);
              }
          }
 
-         Collider2D[] b = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 1f, LayerMask.GetMask("Tile"));
+         Collider2D[] b = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 0.95f  * attackRange, LayerMask.GetMask("Tile"));
         for (int i = 0; i < b.Length; i++)
         {   
             Tile t = b[i].gameObject.GetComponent<Tile>();
-            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t) && !(t.Building != 0 && t.ownerClient == Owner && (t.unit == null || (t.unit != null && t.unit.OwnerNum == OwnerNum))))
+            if (t != current && (t.Building != 0 || t.unit != null) && !moveable.Contains(t) && !(t.Building != 0 && t.ownerClient == Owner && (t.unit == null || (t.unit != null && t.unit.OwnerNum == OwnerNum))) && AttackableTerrainTypes.Contains(t.terrainType))
             {
                 attackable.Add(t);
              }
@@ -205,14 +238,25 @@ public class Unit : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        if(movementPoints <= 0){
+        if(movementPoints[0] + movementPoints[1] <= 0){
         spr.color = new Color(spr.color.r, spr.color.g, spr.color.b, 0.5f);
         } else {
             spr.color = new Color(spr.color.r, spr.color.g, spr.color.b, 1f);
         }
         if(Health <= 0){
-            PV.TransferOwnership(PhotonNetwork.LocalPlayer);
-            PhotonNetwork.Destroy(this.gameObject);
+            current.map.units.Remove(this);
+                                Owner.OwnedUnit.Remove(this);
+                                PV.TransferOwnership(PV.Owner.Get(OwnerNum));
+                                PhotonNetwork.Destroy(gameObject);
+        }
+        if(colonize){
+            if(current.terrainType != -1 && (current.Owner == OwnerNum || current.Owner == 0) && current.Building == 0){
+                current.Click(200, false);
+                current.map.units.Remove(this);
+                Owner.OwnedUnit.Remove(this);
+                PV.TransferOwnership(PV.Owner.Get(OwnerNum));
+                PhotonNetwork.Destroy(gameObject);
+            }
         }
     }
 }
