@@ -9948,6 +9948,8 @@ MonoBehaviour:
   CityVars: 000000000000000000000000
   port: 0
   returnResources: 0000000000000000000000000000000000000000
+  level: 0
+  Upgradable: 0
 --- !u!114 &80553390867227696
 MonoBehaviour:
   m_ObjectHideFlags: 0

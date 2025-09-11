@@ -82,14 +82,19 @@ public class Tile : MonoBehaviour
     public bool port;
 
     public int[] returnResources;
+
+    public int level;
+
+    public bool Upgradable;
     //private int sel;
 
     public void PlayParticle(int a)
     {
-        if(ownerClient == client){
-        PV.RPC("RPC_Parts", RpcTarget.All, a);
+        if (ownerClient == client)
+        {
+            PV.RPC("RPC_Parts", RpcTarget.All, a);
         }
-     }
+    }
 
     [PunRPC]
     public void RPC_Parts(int a)
@@ -240,12 +245,16 @@ public class Tile : MonoBehaviour
           //  user = client;
        // }
         if(ownerClient == null){
+           // Debug.Log("set");
             ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
         }
-      // ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
-        if(first){
+        // ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
+        if (first)
+        {
             if ((Owner == sel || Owner == 0) && terrainType != -1)
             {
+                level = 1;
+                Upgradable = false;
                 //  PhotonNetwork.Instantiate(client.stuff[0], transform.position, transform.rotation);
                 ResourcesSum[0] = 3;
                 ResourcesSum[1] = 0;
@@ -253,13 +262,13 @@ public class Tile : MonoBehaviour
                 ResourcesSum[3] = 2;
                 ResourcesSum[4] = 00;
 
-                
-                
+
+
                 CityVars[0] = 2;
                 Building = 1;
                 spr2.sprite = sprites[Building];
                 Owner = sel;
-                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
                 ownerClient.OwnedTiles.Add(this);
                 ownerClient.cities.Add(this);
                 ownerClient.Resources[0] = 3;
@@ -269,10 +278,10 @@ public class Tile : MonoBehaviour
                 ownerClient.Resources[4] = 00;
                 Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 2.9f, LayerMask.GetMask("Tile"));
                 for (int i = 0; i < l.Length; i++)
-                {   
+                {
                     Tile t = l[i].gameObject.GetComponent<Tile>();
                     if (t != this && (t.Owner == 0 || t.Owner == sel))
-                    {       
+                    {
                         t.Owner = sel;
                         t.ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                         t.SetColor(sel);
@@ -297,21 +306,24 @@ public class Tile : MonoBehaviour
                 }
             }
             //spr.color = new Color(0f, 0.5f, 0.5f);
-            }
-            else
-            {
+        }
+        else
+        {
             if (buildingsel != -1 && buildingsel != 0 && ownerClient.Resources[0] >= ownerClient.requirments[0] && ownerClient.Resources[1] >= ownerClient.requirments[1] && ownerClient.Resources[2] >= ownerClient.requirments[2] && ownerClient.Resources[3] >= ownerClient.requirments[3] && ownerClient.Resources[4] >= ownerClient.requirments[4] && unit == null && terrainType != -1)
             {
                 if (Owner == sel)
                 {
                     if (Building == 0)
                     {
-                       // if (buildingsel > 0)
-                       // {
-                            if (buildingsel == 3 && (resource == 1 || resource == 2))
+                        // if (buildingsel > 0)
+                        // {
+                        if (buildingsel == 3 && (resource == 1 || resource == 2))
+                        {
+                            level = 1;
+                            Upgradable = true;
+                            PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
+                            if (NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0]))
                             {
-                                PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
-                                if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
                                 Owner = sel;
                                 ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 ownerClient.Build();
@@ -324,19 +336,23 @@ public class Tile : MonoBehaviour
                                 spr2.sprite = sprites[3];
                                 SetColor(sel);
                                 PlayParticle(3);
-                                
-                                if(Building == 3){
+
+                                if (Building == 3)
+                                {
                                     MaxHealth = 50;
                                     Health = MaxHealth;
                                 }
                                 NearestCity.CityVars[1]++;
-                                }
-                                
                             }
-                            else if (buildingsel == 4)
+
+                        }
+                        else if (buildingsel == 4)
+                        {
+                            level = 1;
+                            Upgradable = true;
+                            PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
+                            if (NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0]))
                             {
-                                PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
-                                if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
                                 Owner = sel;
                                 ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 ownerClient.Build();
@@ -354,40 +370,49 @@ public class Tile : MonoBehaviour
                                 ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 TakesInput = true;
                                 //ResourcesProducing[1] = 1;
-                                if(Building == 4){
+                                if (Building == 4)
+                                {
                                     MaxHealth = 125;
                                     Health = MaxHealth;
                                 }
                                 NearestCity.CityVars[1]++;
-                                }
-                            } else if (buildingsel == 5 && resource == -1)
+                            }
+                        }
+                        else if (buildingsel == 5 && resource == -1)
+                        {
+                            level = 1;
+                            Upgradable = true;
+                            PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
+                            Owner = sel;
+                            ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                            ownerClient.Build();
+                            returnResources[0] = ownerClient.requirments[0];
+                            returnResources[1] = ownerClient.requirments[1];
+                            returnResources[2] = ownerClient.requirments[2];
+                            returnResources[3] = ownerClient.requirments[3];
+                            returnResources[4] = ownerClient.requirments[4];
+                            //Inputs[0] = 1;
+                            Building = buildingsel;
+                            spr2.sprite = sprites[6];
+                            SetColor(sel);
+                            PlayParticle(3);
+                            TakesInput = true;
+                            //ResourcesProducing[1] = 1;
+                            if (Building == 5)
                             {
-                                PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
+                                MaxHealth = 75;
+                                Health = MaxHealth;
+                            }
+                            NearestCity.CityVars[1]--;
+                        }
+                        else if (buildingsel == 6 && resource == -2)
+                        {
+                            level = 1;
+                            Upgradable = true;
+                            PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
+                            if (NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0]))
+                            {
                                 Owner = sel;
-                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
-                                ownerClient.Build();
-                                returnResources[0] = ownerClient.requirments[0];
-                                returnResources[1] = ownerClient.requirments[1];
-                                returnResources[2] = ownerClient.requirments[2];
-                                returnResources[3] = ownerClient.requirments[3];
-                                returnResources[4] = ownerClient.requirments[4];
-                                //Inputs[0] = 1;
-                                Building = buildingsel;
-                                spr2.sprite = sprites[6];
-                                SetColor(sel);
-                                PlayParticle(3);
-                                TakesInput = true;
-                                //ResourcesProducing[1] = 1;
-                                if(Building == 5){
-                                    MaxHealth = 75;
-                                    Health = MaxHealth;
-                                }
-                                NearestCity.CityVars[1]--;
-                            } else if (buildingsel == 6 && resource == -2)
-                            {
-                                PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
-                                if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
-                                    Owner = sel;
                                 ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 ownerClient.Build();
                                 returnResources[0] = ownerClient.requirments[0];
@@ -402,41 +427,50 @@ public class Tile : MonoBehaviour
                                 PlayParticle(3);
                                 TakesInput = true;
                                 //ResourcesProducing[1] = 1;
-                                if(Building == 6){
+                                if (Building == 6)
+                                {
                                     MaxHealth = 125;
                                     Health = MaxHealth;
                                 }
                                 NearestCity.CityVars[1]++;
-                                }
-                            } else if (buildingsel == 7)
-                            {
-                                PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
+                            }
+                        }
+                        else if (buildingsel == 7)
+                        {
+                            level = 1;
+                            Upgradable = true;
+                            PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
                             //if(NearestCity.CityVars[1] < (int)(2.5f * NearestCity.CityVars[0])){
-                                Owner = sel;
-                                ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
-                                ownerClient.Build();
-                                returnResources[0] = ownerClient.requirments[0];
-                                returnResources[1] = ownerClient.requirments[1];
-                                returnResources[2] = ownerClient.requirments[2];
-                                returnResources[3] = ownerClient.requirments[3];
-                                returnResources[4] = ownerClient.requirments[4];
-                                //Inputs[0] = 1;
-                                Building = buildingsel;
-                                spr2.sprite = sprites[8];
-                                SetColor(sel);
-                                PlayParticle(3);
-                                TakesInput = true;
-                                //ResourcesProducing[1] = 1;
-                                if(Building == 7){
-                                    MaxHealth = 150;
-                                    Health = MaxHealth;
-                                }
-                                //NearestCity.CityVars[1]++;
-                                //}
-                            }  else if (buildingsel == 8)
+                            Owner = sel;
+                            ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                            ownerClient.Build();
+                            returnResources[0] = ownerClient.requirments[0];
+                            returnResources[1] = ownerClient.requirments[1];
+                            returnResources[2] = ownerClient.requirments[2];
+                            returnResources[3] = ownerClient.requirments[3];
+                            returnResources[4] = ownerClient.requirments[4];
+                            //Inputs[0] = 1;
+                            Building = buildingsel;
+                            spr2.sprite = sprites[8];
+                            SetColor(sel);
+                            PlayParticle(3);
+                            TakesInput = true;
+                            //ResourcesProducing[1] = 1;
+                            if (Building == 7)
                             {
-                                PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
-                                if(NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0])){
+                                MaxHealth = 150;
+                                Health = MaxHealth;
+                            }
+                            //NearestCity.CityVars[1]++;
+                            //}
+                        }
+                        else if (buildingsel == 8)
+                        {
+                            level = 1;
+                            Upgradable = true;
+                            PV.RPC("RPC_GetNearestCityForClient", RpcTarget.All);
+                            if (NearestCity.CityVars[1] < (int)(3f * NearestCity.CityVars[0]))
+                            {
                                 Owner = sel;
                                 ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 ownerClient.Build();
@@ -450,158 +484,225 @@ public class Tile : MonoBehaviour
                                 spr2.sprite = sprites[9];
                                 SetColor(sel);
                                 PlayParticle(3);
-                                
+
                                 //TakesInput = true;
                                 //ResourcesProducing[1] = 1;
-                                if(Building == 8){
+                                if (Building == 8)
+                                {
                                     MaxHealth = 100;
                                     Health = MaxHealth;
                                 }
                                 NearestCity.CityVars[1]++;
-                                }
                             }
+                        }
 
-                            if (resource == 1 && Building == 3)
-                            {
-                                ResourcesProducing[0] = 1;
-                            }
-                            if (resource == 2 && Building == 3)
-                            {
-                                ResourcesProducing[1] = 1;
-                            }
-                            if (resource == -1 && Building == 5)
-                            {
-                                ResourcesProducing[4] = 1;
-                            }
-                            if (resource == -2 && Building == 6)
-                            {
-                                ResourcesProducing[3] = 1;
-                            }
+                        if (resource == 1 && Building == 3)
+                        {
+                            ResourcesProducing[0] = 1;
+                        }
+                        if (resource == 2 && Building == 3)
+                        {
+                            ResourcesProducing[1] = 1;
+                        }
+                        if (resource == -1 && Building == 5)
+                        {
+                            ResourcesProducing[4] = 1;
+                        }
+                        if (resource == -2 && Building == 6)
+                        {
+                            ResourcesProducing[3] = 1;
+                        }
 
                         //}
-                       // else 
+                        // else 
                     }
-                    
+
                     if (buildingsel == -2 && Building != 1 && Building != 100)
                     {
-                        
+
                         Deconstruct(sel, buildingsel, true);
-                       // NearestCity.CityVars[1]--;
+                        // NearestCity.CityVars[1]--;
                     }
-                    if(buildingsel == 100){
-                        if(Building == 0 && ownerClient.Resources[2] >= 2 && ownerClient.Resources[3] >= 4 && terrainType != -1){
-                        Owner = sel;
-                        ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
-                        MaxHealth = 150;
-                        Health = MaxHealth;
-                        CityVars[0] = 1;
-                        Building = buildingsel;
-                                spr2.sprite = sprites[5];
-                                SetColor(sel);
-                                PlayParticle(2);
-                                if(ownerClient == client){
+                    if (buildingsel == 100)
+                    {
+                        if (Building == 0 && ownerClient.Resources[2] >= 2 && ownerClient.Resources[3] >= 4 && terrainType != -1 && Owner == client.PV.Owner.ActorNumber)
+                        {
+                            level = 1;
+                            Upgradable = false;
+                            Owner = sel;
+                            ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                            MaxHealth = 150;
+                            Health = MaxHealth;
+                            CityVars[0] = 1;
+                            Building = buildingsel;
+                            //client.selection = 0;
+                            spr2.sprite = sprites[5];
+                            SetColor(sel);
+                            PlayParticle(2);
+                            if (ownerClient == client)
+                            {
                                 ownerClient.ChangeResource(2, -2);
                                 ownerClient.ChangeResource(3, -4);
-                                }
-                                ownerClient.cities.Add(this);
+                            }
+                            ownerClient.cities.Add(this);
                             Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 1.95f, LayerMask.GetMask("Tile"));
                             for (int i = 0; i < l.Length; i++)
-                        {   
-                            Tile t = l[i].gameObject.GetComponent<Tile>();
-                            if (t != this && (t.Owner == 0))
-                        {       
-                                t.Owner = sel;
-                                t.ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
-                                t.SetColor(sel);
-                                SphereOfInfluence.Add(t);
-                                ownerClient.OwnedTiles.Add(t);
+                            {
+                                Tile t = l[i].gameObject.GetComponent<Tile>();
+                                if (t != this && (t.Owner == 0))
+                                {
+                                    t.Owner = sel;
+                                    t.ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                                    t.SetColor(sel);
+                                    SphereOfInfluence.Add(t);
+                                    ownerClient.OwnedTiles.Add(t);
+                                }
                             }
-                        }      
-                        } 
-                    } else if(buildingsel == 200){
+                        }
+                    }
+                    else if (buildingsel == 200)
+                    {
+                        level = 1;
+                        Upgradable = false;
                         Owner = sel;
                         ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                         MaxHealth = 150;
                         Health = MaxHealth;
                         CityVars[0] = 1;
                         Building = 100;
-                                spr2.sprite = sprites[5];
-                                SetColor(sel);
-                                PlayParticle(2);
-                               // ownerClient.Resources[2] -= 2;
-                               // ownerClient.Resources[3] -= 4;
-                                ownerClient.cities.Add(this);
-                            Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 1.95f, LayerMask.GetMask("Tile"));
-                            for (int i = 0; i < l.Length; i++)
-                        {   
+                        spr2.sprite = sprites[5];
+                        SetColor(sel);
+                        PlayParticle(2);
+                        // ownerClient.Resources[2] -= 2;
+                        // ownerClient.Resources[3] -= 4;
+                        ownerClient.cities.Add(this);
+                        Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 1.95f, LayerMask.GetMask("Tile"));
+                        for (int i = 0; i < l.Length; i++)
+                        {
                             Tile t = l[i].gameObject.GetComponent<Tile>();
                             if (t != this && (t.Owner == 0))
-                        {       
+                            {
                                 t.Owner = sel;
                                 t.ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
                                 t.SetColor(sel);
                                 SphereOfInfluence.Add(t);
                                 ownerClient.OwnedTiles.Add(t);
                             }
-                        } 
-                    }
-                }
-                
-                }
-                else if(buildingsel == 0){
-                    client.SelectedTile = this;
-                    if(unit != null){
-                        client.selectedUnit = unit;
-                    }
-                }
-                if (buildingsel == -3)
-                {
-                    Debug.Log("sdas");
-                    if(unit != null){
-                        Debug.Log("aaa");
-                        unit.Clicked();
-                    }
-                    if (client.selectedUnit != null && client.selectedUnit.moveable.Contains(this) && client.selectedUnit.movementPoints[0] > 0)
-                    {
-                        //client.selectedUnit
-                        client.selectedUnit.Move(this);
-                        client.selectedUnit.movementPoints[0]--;
-                        client.selectedUnit = null;
-                        
-                    }
-                    else if(client.selectedUnit != null && client.selectedUnit.attackable.Contains(this) && client.selectedUnit.movementPoints[1] > 0 && !(client.selectedUnit.OmniMove && client.selectedUnit.movementPoints[0] <= 0))
-                    {
-                        client.selectedUnit.ToggleMoveZone(false);
-                        if(unit == null){
-                            Damage(client.selectedUnit.damage);
-                        } else {
-                            unit.Damage(client.selectedUnit.damage);
-                            if(unit.Health > 0){
-                                client.selectedUnit.Damage(unit.CounterAttackDamage);
-                            }
                         }
-                       client.selectedUnit.movementPoints[1]--;
-                       if(client.selectedUnit.OmniMove){
+                    }
+                    else if (buildingsel == 300)
+                    {
+                        if (Building == 100 && ownerClient.Resources[2] >= 2 && ownerClient.Resources[4] >= 3 && terrainType != -1 && Owner == client.PV.Owner.ActorNumber)
+                        {
+                            level = 1;
+                            Upgradable = false;
+                            CityVars[0] = 2;
+                            Building = 1;
+                            spr2.sprite = sprites[Building];
+                            Owner = sel;
+                            ownerClient = GameObject.Find(sel + "").GetComponent<ClientStuff>();
+                            if (ownerClient == client)
+                            {
+                                ownerClient.ChangeResource(2, -2);
+                                ownerClient.ChangeResource(4, -3);
+                            }
+                            SphereOfInfluence.Clear();
+                            Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 2.9f, LayerMask.GetMask("Tile"));
+                            for (int i = 0; i < l.Length; i++)
+                            {
+                                Tile t = l[i].gameObject.GetComponent<Tile>();
+                                if (t != this && (t.Owner == 0 || t.Owner == sel))
+                                {
+                                    t.Owner = sel;
+                                    t.ownerClient = GameObject.Find(Owner + "").GetComponent<ClientStuff>();
+                                    t.SetColor(sel);
+                                    SphereOfInfluence.Add(t);
+                                    if (!ownerClient.OwnedTiles.Contains(t))
+                                    {
+                                        ownerClient.OwnedTiles.Add(t);
+                                    }
+                                }
+                            }
+                            SetColor(sel);
+                            //if(PV.IsMine){
+                            PlayParticle(1);
+                            //}
+                            MaxHealth = 200;
+                            Health = MaxHealth;
+                        }
+                    }
+                }
+
+            }
+
+            if (buildingsel == -3)
+            {
+                Debug.Log("sdas");
+                if (unit != null)
+                {
+                    Debug.Log("aaa");
+                    unit.Clicked();
+                }
+                if (client.selectedUnit != null && client.selectedUnit.moveable.Contains(this) && client.selectedUnit.movementPoints[0] > 0)
+                {
+                    //client.selectedUnit
+                    client.selectedUnit.Move(this);
+                    client.selectedUnit.movementPoints[0]--;
+                    client.selectedUnit = null;
+
+                }
+                else if (client.selectedUnit != null && client.selectedUnit.attackable.Contains(this) && client.selectedUnit.movementPoints[1] > 0 && !(client.selectedUnit.OmniMove && client.selectedUnit.movementPoints[0] <= 0))
+                {
+                    client.selectedUnit.ToggleMoveZone(false);
+                    if (unit == null)
+                    {
+                        Damage(client.selectedUnit.damage);
+                    }
+                    else
+                    {
+                        unit.Damage(client.selectedUnit.damage);
+                        if (unit.Health > 0)
+                        {
+                            client.selectedUnit.Damage(unit.CounterAttackDamage);
+                        }
+                    }
+                    client.selectedUnit.movementPoints[1]--;
+                    if (client.selectedUnit.OmniMove)
+                    {
                         client.selectedUnit.movementPoints[0]--;
-                       }
-                       client.selectedUnit = null;
-                     }
-                 }
-                if(buildingsel == -4){
-                    if(Building == 4 && cooldown == 0 && sel == Owner){
-                        if(ownerClient.Resources[0] >= 1 && ownerClient.Resources[1] >= 1){
-                            PlayParticle(4);
-                            spr2.color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.5f);
-                            cooldown = 1;
-                            if(ownerClient == client){
+                    }
+                    client.selectedUnit = null;
+                }
+            }
+            if (buildingsel == -4)
+            {
+                if (Building == 4 && cooldown == 0 && sel == Owner)
+                {
+                    if (ownerClient.Resources[0] >= 1 && ownerClient.Resources[1] >= 1)
+                    {
+                        PlayParticle(4);
+                        spr2.color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.5f);
+                        cooldown = 1;
+                        if (ownerClient == client)
+                        {
                             ownerClient.ChangeResource(0, -1);
                             ownerClient.ChangeResource(1, -1);
                             ownerClient.ChangeResource(2, 1);
-                            }
-                            //NearestCity.CityVars[2]--;
                         }
+                        //NearestCity.CityVars[2]--;
                     }
                 }
+            }
+            if (buildingsel == -5)
+            {
+                if (Upgradable)
+                {
+                    //if()
+                    level++;
+                    Upgradable = false;
+                    
+                 }
+             }
             
             }
             if(Health <= 0 && Building != 0){
@@ -709,78 +810,86 @@ public class Tile : MonoBehaviour
     }
 
     public void Click(int s, bool a){
-        if(client.MyTurn){
-            if(ownerClient != null){
-            if (s == -100 && ownerClient.MyTurn)
-                        {
-                            Debug.Log("as");
-                        if ((Building == 1 || Building == 100) && unit == null && ownerClient.Resources[2] >= ownerClient.techTree.UnitPrices[0, 2] && ownerClient.Resources[4] >= ownerClient.techTree.UnitPrices[0, 4])
-                        {
-                            ownerClient.Resources[0] -= ownerClient.techTree.UnitPrices[0,0];
-                            ownerClient.Resources[1] -= ownerClient.techTree.UnitPrices[0,1];
-                            ownerClient.Resources[2] -= ownerClient.techTree.UnitPrices[0,2];
-                            ownerClient.Resources[3] -= ownerClient.techTree.UnitPrices[0,3];
-                            ownerClient.Resources[4] -= ownerClient.techTree.UnitPrices[0, 4];
-                            PhotonNetwork.Instantiate(Path.Combine("UnitTank"), transform.position, transform.rotation);
-                            
-                            }
-                         }
-            if (s == -101 && ownerClient.MyTurn)
-                        {
-                            Debug.Log("as");
-                        if ((Building == 1 || Building == 100) && unit == null && ownerClient.Resources[2] >= ownerClient.techTree.UnitPrices[1, 2] && ownerClient.Resources[4] >= ownerClient.techTree.UnitPrices[1, 4])
-                        {
-                            ownerClient.Resources[0] -= ownerClient.techTree.UnitPrices[1, 0];
-                            ownerClient.Resources[1] -= ownerClient.techTree.UnitPrices[1, 1];
-                            ownerClient.Resources[2] -= ownerClient.techTree.UnitPrices[1, 2];
-                            ownerClient.Resources[3] -= ownerClient.techTree.UnitPrices[1, 3];
-                            ownerClient.Resources[4] -= ownerClient.techTree.UnitPrices[1, 4];
-                            PhotonNetwork.Instantiate(Path.Combine("UnitInfantry"), transform.position, transform.rotation);
-                            
-                            }
-                         }
-            if (s == -102 && ownerClient.MyTurn)
-                        {
-                            Debug.Log("as");
-                        if ((Building == 1 || Building == 100) && unit == null && ownerClient.Resources[2] >= ownerClient.techTree.UnitPrices[2, 2] && ownerClient.Resources[4] >= ownerClient.techTree.UnitPrices[2, 4])
-                        {
-                            ownerClient.Resources[0] -= ownerClient.techTree.UnitPrices[2, 0];
-                            ownerClient.Resources[1] -= ownerClient.techTree.UnitPrices[2, 1];
-                            ownerClient.Resources[2] -= ownerClient.techTree.UnitPrices[2, 2];
-                            ownerClient.Resources[3] -= ownerClient.techTree.UnitPrices[2, 3];
-                            ownerClient.Resources[4] -= ownerClient.techTree.UnitPrices[2, 4];
-                            PhotonNetwork.Instantiate(Path.Combine("UnitArtillery"), transform.position, transform.rotation);
-                            
-                            }
-                         }
-            if (s == -103 && ownerClient.MyTurn && port)
-                        {
-                            Debug.Log("as");
-                        if ((Building == 1 || Building == 100) && unit == null && ownerClient.Resources[2] >= ownerClient.techTree.UnitPrices[3, 2] && ownerClient.Resources[4] >= ownerClient.techTree.UnitPrices[3, 4] && ownerClient.Resources[0] >= ownerClient.techTree.UnitPrices[3, 0])
-                        {
-                            ownerClient.Resources[0] -= ownerClient.techTree.UnitPrices[3, 0];
-                            ownerClient.Resources[1] -= ownerClient.techTree.UnitPrices[3, 1];
-                            ownerClient.Resources[2] -= ownerClient.techTree.UnitPrices[3, 2];
-                            ownerClient.Resources[3] -= ownerClient.techTree.UnitPrices[3, 3];
-                            ownerClient.Resources[4] -= ownerClient.techTree.UnitPrices[3, 4];
-                            PhotonNetwork.Instantiate(Path.Combine("UnitBattleShip"), transform.position, transform.rotation);
-                            
-                            }
-                         }
-            if (s == -104 && ownerClient.MyTurn && port)
-                        {
-                            Debug.Log("as");
-                        if ((Building == 1 || Building == 100) && unit == null && ownerClient.Resources[2] >= ownerClient.techTree.UnitPrices[4, 2] && ownerClient.Resources[3] >= ownerClient.techTree.UnitPrices[4, 3] && ownerClient.Resources[4] >= ownerClient.techTree.UnitPrices[4, 4])
-                        {
-                            ownerClient.Resources[0] -= ownerClient.techTree.UnitPrices[4, 0];
-                            ownerClient.Resources[1] -= ownerClient.techTree.UnitPrices[4, 1];
-                            ownerClient.Resources[2] -= ownerClient.techTree.UnitPrices[4, 2];
-                            ownerClient.Resources[3] -= ownerClient.techTree.UnitPrices[4, 3];
-                            ownerClient.Resources[4] -= ownerClient.techTree.UnitPrices[4, 4];
-                            PhotonNetwork.Instantiate(Path.Combine("UnitColony"), transform.position, transform.rotation);
-                            
-                            }
-                         }
+        if(s == 0){
+                    client.SelectedTile = this;
+                    if(unit != null){
+                        client.selectedUnit = unit;
+                    }
+                }
+        if (client.MyTurn)
+        {
+            if (ownerClient != null)
+            {
+                if (s == -100 && ownerClient.MyTurn)
+                {
+                    Debug.Log("as");
+                    if ((Building == 1 || Building == 100) && unit == null && ownerClient.Resources[2] >= ownerClient.techTree.UnitPrices[0, 2] && ownerClient.Resources[4] >= ownerClient.techTree.UnitPrices[0, 4])
+                    {
+                        ownerClient.Resources[0] -= ownerClient.techTree.UnitPrices[0, 0];
+                        ownerClient.Resources[1] -= ownerClient.techTree.UnitPrices[0, 1];
+                        ownerClient.Resources[2] -= ownerClient.techTree.UnitPrices[0, 2];
+                        ownerClient.Resources[3] -= ownerClient.techTree.UnitPrices[0, 3];
+                        ownerClient.Resources[4] -= ownerClient.techTree.UnitPrices[0, 4];
+                        PhotonNetwork.Instantiate(Path.Combine("UnitTank"), transform.position, transform.rotation);
+
+                    }
+                }
+                if (s == -101 && ownerClient.MyTurn)
+                {
+                    Debug.Log("as");
+                    if ((Building == 1 || Building == 100) && unit == null && ownerClient.Resources[2] >= ownerClient.techTree.UnitPrices[1, 2] && ownerClient.Resources[4] >= ownerClient.techTree.UnitPrices[1, 4])
+                    {
+                        ownerClient.Resources[0] -= ownerClient.techTree.UnitPrices[1, 0];
+                        ownerClient.Resources[1] -= ownerClient.techTree.UnitPrices[1, 1];
+                        ownerClient.Resources[2] -= ownerClient.techTree.UnitPrices[1, 2];
+                        ownerClient.Resources[3] -= ownerClient.techTree.UnitPrices[1, 3];
+                        ownerClient.Resources[4] -= ownerClient.techTree.UnitPrices[1, 4];
+                        PhotonNetwork.Instantiate(Path.Combine("UnitInfantry"), transform.position, transform.rotation);
+
+                    }
+                }
+                if (s == -102 && ownerClient.MyTurn)
+                {
+                    Debug.Log("as");
+                    if ((Building == 1 || Building == 100) && unit == null && ownerClient.Resources[2] >= ownerClient.techTree.UnitPrices[2, 2] && ownerClient.Resources[4] >= ownerClient.techTree.UnitPrices[2, 4])
+                    {
+                        ownerClient.Resources[0] -= ownerClient.techTree.UnitPrices[2, 0];
+                        ownerClient.Resources[1] -= ownerClient.techTree.UnitPrices[2, 1];
+                        ownerClient.Resources[2] -= ownerClient.techTree.UnitPrices[2, 2];
+                        ownerClient.Resources[3] -= ownerClient.techTree.UnitPrices[2, 3];
+                        ownerClient.Resources[4] -= ownerClient.techTree.UnitPrices[2, 4];
+                        PhotonNetwork.Instantiate(Path.Combine("UnitArtillery"), transform.position, transform.rotation);
+
+                    }
+                }
+                if (s == -103 && ownerClient.MyTurn && port)
+                {
+                    Debug.Log("as");
+                    if ((Building == 1 || Building == 100) && unit == null && ownerClient.Resources[2] >= ownerClient.techTree.UnitPrices[3, 2] && ownerClient.Resources[4] >= ownerClient.techTree.UnitPrices[3, 4] && ownerClient.Resources[0] >= ownerClient.techTree.UnitPrices[3, 0])
+                    {
+                        ownerClient.Resources[0] -= ownerClient.techTree.UnitPrices[3, 0];
+                        ownerClient.Resources[1] -= ownerClient.techTree.UnitPrices[3, 1];
+                        ownerClient.Resources[2] -= ownerClient.techTree.UnitPrices[3, 2];
+                        ownerClient.Resources[3] -= ownerClient.techTree.UnitPrices[3, 3];
+                        ownerClient.Resources[4] -= ownerClient.techTree.UnitPrices[3, 4];
+                        PhotonNetwork.Instantiate(Path.Combine("UnitBattleShip"), transform.position, transform.rotation);
+
+                    }
+                }
+                if (s == -104 && ownerClient.MyTurn && port)
+                {
+                    Debug.Log("as");
+                    if ((Building == 1 || Building == 100) && unit == null && ownerClient.Resources[2] >= ownerClient.techTree.UnitPrices[4, 2] && ownerClient.Resources[3] >= ownerClient.techTree.UnitPrices[4, 3] && ownerClient.Resources[4] >= ownerClient.techTree.UnitPrices[4, 4])
+                    {
+                        ownerClient.Resources[0] -= ownerClient.techTree.UnitPrices[4, 0];
+                        ownerClient.Resources[1] -= ownerClient.techTree.UnitPrices[4, 1];
+                        ownerClient.Resources[2] -= ownerClient.techTree.UnitPrices[4, 2];
+                        ownerClient.Resources[3] -= ownerClient.techTree.UnitPrices[4, 3];
+                        ownerClient.Resources[4] -= ownerClient.techTree.UnitPrices[4, 4];
+                        PhotonNetwork.Instantiate(Path.Combine("UnitColony"), transform.position, transform.rotation);
+
+                    }
+                }
             }
             PV.RPC("RPC_Clicked", RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber, s, client.FirstTurn);
         }

@@ -77,6 +77,7 @@ public class ClientStuff : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
+        selection = 0;
         selectedUnit = null;
         cam2 = cam.GetComponent<Camera>();
         color = Color.HSVToRGB((1f / PhotonNetwork.CurrentRoom.PlayerCount) * PhotonNetwork.LocalPlayer.ActorNumber, 1, 1);

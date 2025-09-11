@@ -22,8 +22,12 @@ public class Inventory : MonoBehaviour
 
     public GameObject[] units;
 
-    public void Activate(int a){
-        foreach(GameObject g in gobj){
+    public GameObject[] Upgrade;
+
+    public void Activate(int a)
+    {
+        foreach (GameObject g in gobj)
+        {
             g.SetActive(false);
         }
         gobj[a].SetActive(true);
@@ -35,10 +39,20 @@ public class Inventory : MonoBehaviour
         }
         gobj2[a].SetActive(true);
     }
+    
+    public void Activateadd(int a){
+        gobj2[a].SetActive(true);
+    }
 
-    public void DisableAll(){
-        foreach(GameObject g in gobj2){
+    public void DisableAll()
+    {
+        foreach (GameObject g in gobj2)
+        {
             g.SetActive(false);
+        }
+        foreach (GameObject o in Upgrade)
+        {
+            o.SetActive(false);
         }
         //gobj2[a].SetActive(true);
     }
@@ -46,6 +60,10 @@ public class Inventory : MonoBehaviour
     public void Do(int a)
     {
         client.SelectedTile.Click(a, false);
+        if (a == -3)
+        {
+            client.Select(-3);
+         }
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -122,24 +140,45 @@ public class Inventory : MonoBehaviour
                     }
                     if (client.SelectedTile.ownerClient == client)
                     {
-                        if ((client.SelectedTile.Building == 1 || client.SelectedTile.Building == 100) && client.SelectedTile.Owner == client.PV.Owner.ActorNumber)
+                        if ((client.SelectedTile.Building == 1 || client.SelectedTile.Building == 100) && client.SelectedTile.Owner == client.PV.Owner.ActorNumber && client.MyTurn)
                         {
                             Activate2(0);
+                            if (client.SelectedTile.Building == 100)
+                            {
+                                Upgrade[0].SetActive(true);
+                            }
+                            else
+                            {
+                                Upgrade[0].SetActive(false);
+                            }
                         }
-                        else if (client.SelectedTile.Building == 4 && client.SelectedTile.Owner == client.PV.Owner.ActorNumber)
+                        else if (client.SelectedTile.Building == 4 && client.SelectedTile.Owner == client.PV.Owner.ActorNumber && client.MyTurn)
                         {
                             Activate2(1);
+                            Upgrade[1].SetActive(client.SelectedTile.Upgradable);
                         }
-                        else if (client.SelectedTile.Building == 0 && client.SelectedTile.Owner == client.PV.Owner.ActorNumber)
+                        else if (client.SelectedTile.Building == 0 && client.SelectedTile.Owner == client.PV.Owner.ActorNumber && client.MyTurn)
                         {
-                            Activate2(2);
+                            //Activate2(2);
                             //establish city
-                        } else if (client.SelectedTile.Building == 7 && client.SelectedTile.Owner == client.PV.Owner.ActorNumber)
+                        }
+                        else if (client.SelectedTile.Building == 7 && client.SelectedTile.Owner == client.PV.Owner.ActorNumber && client.MyTurn)
                         {
                             Activate2(3);
-                        } else {
+                        }
+                        else if (client.SelectedTile.Building != 0 && client.SelectedTile.Owner == client.PV.Owner.ActorNumber && client.MyTurn)
+                        {
+                            Activate2(4);
+                            Upgrade[2].SetActive(client.SelectedTile.Upgradable);
+                        }
+                        else
+                        {
                             DisableAll();
                         }
+                        if (client.selectedUnit != null)
+                        {
+                            Activateadd(5);
+                         }
                     }
                 }
             }
