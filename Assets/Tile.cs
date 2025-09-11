@@ -499,8 +499,10 @@ public class Tile : MonoBehaviour
                                 spr2.sprite = sprites[5];
                                 SetColor(sel);
                                 PlayParticle(2);
+                                if(ownerClient == client){
                                 ownerClient.ChangeResource(2, -2);
                                 ownerClient.ChangeResource(3, -4);
+                                }
                                 ownerClient.cities.Add(this);
                             Collider2D[] l = Physics2D.OverlapCircleAll(new Vector2(transform.position.x, transform.position.y), 1.95f, LayerMask.GetMask("Tile"));
                             for (int i = 0; i < l.Length; i++)
@@ -591,24 +593,12 @@ public class Tile : MonoBehaviour
                             PlayParticle(4);
                             spr2.color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.5f);
                             cooldown = 1;
-                            if(PV.IsMine){
+                            if(ownerClient == client){
                             ownerClient.ChangeResource(0, -1);
                             ownerClient.ChangeResource(1, -1);
                             ownerClient.ChangeResource(2, 1);
                             }
                             //NearestCity.CityVars[2]--;
-                        }
-                    }
-                }
-                if(buildingsel == -5){
-                    if(Building == 7 && cooldown == 0 && sel == Owner){
-                        if(ownerClient.Resources[0] >= 1 && ownerClient.Resources[1] >= 1){
-                            spr2.color = new Color(spr2.color.r, spr2.color.g, spr2.color.b, 0.5f);
-                            cooldown = 1;
-                           // ownerClient.Resources[0] -= 1;
-                            ownerClient.Resources[1] -= 1;
-                            NearestCity.CityVars[2] += 2;
-                           // ownerClient.Resources[2]++;
                         }
                     }
                 }

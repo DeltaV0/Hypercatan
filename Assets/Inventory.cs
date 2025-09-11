@@ -74,7 +74,7 @@ public class Inventory : MonoBehaviour
                     } else if(client.SelectedTile.Building == 4){
                         text[0].text = "Factory";
                     } else if(client.SelectedTile.Building == 100){
-                        text[0].text = "Garrison";
+                        text[0].text = "Outpost";
                     } else if(client.SelectedTile.Building == 5){
                         text[0].text = "Farm";
                     } else if(client.SelectedTile.Building == 6){
@@ -85,7 +85,7 @@ public class Inventory : MonoBehaviour
                         text[0].text = "University";
                     }
                     //text[0].text = text[1].text;
-                    if(client.SelectedTile.Building != 1 || client.SelectedTile.Building != 100){
+                    if(client.SelectedTile.Building != 1 && client.SelectedTile.Building != 100){
                     if(client.SelectedTile.terrainType == -1){
                         text[1].text = "Water, ";
                     } else if(client.SelectedTile.terrainType == 0){
