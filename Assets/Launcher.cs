@@ -45,7 +45,12 @@ public class Launcher : MonoBehaviourPunCallbacks
     }
     
     public void CreateRoom(){
+        if(string.IsNullOrEmpty(PhotonNetwork.LocalPlayer.Nickname)){
+            PhotonNetwork.LocalPlayer.Nickname = Random.Range(0, 1000);
+        }
         if(string.IsNullOrEmpty(input.text)){
+            PhotonNetwork.CreateRoom(PhotonNetwork.LocalPlayer.Nickname + "'s room");
+            MenuManager.menuManager.OpenMenu("loading");
             return;
         }
         PhotonNetwork.CreateRoom(input.text);
@@ -99,6 +104,9 @@ public class Launcher : MonoBehaviourPunCallbacks
     }
 
     public void JoinRoom(RoomInfo info){
+        if(string.IsNullOrEmpty(PhotonNetwork.LocalPlayer.Nickname)){
+            PhotonNetwork.LocalPlayer.Nickname = Random.Range(0, 1000);
+        }
         PhotonNetwork.JoinRoom(info.Name);
         MenuManager.menuManager.OpenMenu("loading");  
 
